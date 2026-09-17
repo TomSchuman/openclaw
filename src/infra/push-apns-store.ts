@@ -24,38 +24,18 @@ import {
   clearApnsRegistrationFromDatabase,
   nextApnsRegistrationVersion,
 } from "./push-apns-store-transaction.js";
+import type { ApnsEnvironment, ApnsRegistration } from "./push-apns-store.types.js";
 import {
   normalizeApnsRelayBaseUrl,
   normalizePersistedApnsRelayBaseUrl,
 } from "./push-apns.relay.js";
 
-export type ApnsEnvironment = "sandbox" | "production";
-
-export type DirectApnsRegistration = {
-  nodeId: string;
-  transport: "direct";
-  token: string;
-  topic: string;
-  environment: ApnsEnvironment;
-  updatedAtMs: number;
-};
-
-export type RelayApnsRegistration = {
-  nodeId: string;
-  transport: "relay";
-  relayHandle: string;
-  sendGrant: string;
-  installationId: string;
-  topic: string;
-  environment: ApnsEnvironment;
-  distribution: "official";
-  updatedAtMs: number;
-  relayOrigin?: string;
-  tokenDebugSuffix?: string;
-};
-
-/** Stored APNs registration for either direct device tokens or official relay handles. */
-export type ApnsRegistration = DirectApnsRegistration | RelayApnsRegistration;
+export type {
+  ApnsEnvironment,
+  ApnsRegistration,
+  DirectApnsRegistration,
+  RelayApnsRegistration,
+} from "./push-apns-store.types.js";
 
 export class ApnsRegistrationPairingChangedError extends Error {
   constructor() {
