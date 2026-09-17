@@ -2411,12 +2411,27 @@ describe("scripts/lib/ci-node-test-plan.mts", () => {
     }
 
     const sdkFixture = "test/scripts/write-plugin-sdk-entry-dts.test.ts";
-    const sdkJobs = createSelectedNodeTestShardBundles([sdkFixture], { runnerBackend: "hybrid" });
-    expect(
-      sdkJobs?.find((job) =>
+    for (const runnerBackend of ["blacksmith", "hybrid", "github"]) {
+      const sdkJobs = createSelectedNodeTestShardBundles([sdkFixture], { runnerBackend });
+      const fullOwner = getCommittedCompactPlan("pull-request", runnerBackend).find((job) =>
         job.groups.some((group) => group.includePatterns?.includes(sdkFixture)),
-      )?.runner,
-    ).toBe(BUNDLED_NODE_TEST_RUNNER);
+      );
+      const selectedOwner = sdkJobs?.find((job) =>
+        job.groups.some((group) => group.includePatterns?.includes(sdkFixture)),
+      );
+      for (const owner of [fullOwner, selectedOwner]) {
+        expect(owner?.runner, runnerBackend).toBe(
+          runnerBackend === "github" ? BUNDLED_NODE_TEST_RUNNER : EXTRA_LARGE_NODE_TEST_RUNNER,
+        );
+        expect(owner?.planConcurrency).toBe(1);
+      }
+      expect(selectedOwner?.groups).toEqual([
+        expect.objectContaining({
+          includePatterns: [sdkFixture],
+          env: expect.objectContaining({ OPENCLAW_VITEST_MAX_WORKERS: "2" }),
+        }),
+      ]);
+    }
 
     const stripes = toolingShards.filter((shard) => /^core-tooling-\d+$/u.test(shard.shardName));
     expect(stripes).toHaveLength(16);
