@@ -713,7 +713,7 @@ export class DraftSubmissionFlow {
       }
       this.messageValue = "";
       this.mentionsValue = [];
-      this.place.clearSubmittedWorktreeName();
+      this.place.setWorktreeName("", false);
       this.draftPersistence.noteDraftReplaced();
       this.attachmentDraft.clearAfterSubmit(releasePayloads);
       this.sessionStartup.clear();
