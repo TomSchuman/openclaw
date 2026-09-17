@@ -13,6 +13,7 @@ import { upsertSessionEntry } from "openclaw/plugin-sdk/session-store-runtime";
 import { withStateDirEnv } from "openclaw/plugin-sdk/test-env";
 import { expect, it, vi } from "vitest";
 import {
+  claimCodexAppServerLiveThread,
   ensureCodexAppServerClientRuntime,
   isCodexAppServerLiveThreadClaimed,
 } from "./client-runtime.js";
@@ -49,6 +50,8 @@ it.each([
   "active-followup-still-delivering",
   "retired-before-admission",
   "retired-during-receipt-write",
+  "cold-restart-still-delivering",
+  "cold-restart-after-predecessor-recovery",
 ] as const)(
   "preserves saved assignments when a rotated parent resumes a receiver (%s)",
   async (scenario) => {
@@ -68,14 +71,16 @@ it.each([
         storePath,
         entry: { sessionId: identity.sessionId, lifecycleRevision: "same-lifecycle", updatedAt: 1 },
       });
-      const bindingStore = createCodexAppServerBindingStore(
-        createPluginStateSyncKeyedStoreForTests<StoredCodexAppServerBinding>("codex", {
-          namespace: CODEX_APP_SERVER_BINDING_NAMESPACE,
-          maxEntries: CODEX_APP_SERVER_BINDING_MAX_ENTRIES,
-          overflowPolicy: "reject-new",
-          env: { ...process.env, OPENCLAW_STATE_DIR: stateDir },
-        }),
-      );
+      const openBindingStore = () =>
+        createCodexAppServerBindingStore(
+          createPluginStateSyncKeyedStoreForTests<StoredCodexAppServerBinding>("codex", {
+            namespace: CODEX_APP_SERVER_BINDING_NAMESPACE,
+            maxEntries: CODEX_APP_SERVER_BINDING_MAX_ENTRIES,
+            overflowPolicy: "reject-new",
+            env: { ...process.env, OPENCLAW_STATE_DIR: stateDir },
+          }),
+        );
+      let bindingStore = openBindingStore();
       const initialBinding = {
         threadId: "parent-thread",
         cwd: stateDir,
@@ -114,11 +119,16 @@ it.each([
       first.setThreadRead("child-thread", threadRead({ turnId: "turn-a", result: "A result" }));
       const retireBeforeAdmission =
         scenario === "retired-before-admission" || scenario === "retired-during-receipt-write";
+      const coldRestart =
+        scenario === "cold-restart-still-delivering" ||
+        scenario === "cold-restart-after-predecessor-recovery";
       const holdInitialDelivery =
         scenario === "finishes-after-registration" ||
         scenario === "terminal-still-delivering" ||
         scenario === "active-followup-still-delivering" ||
+        coldRestart ||
         retireBeforeAdmission;
+      let releasePredecessorRecovery = () => {};
       let releaseReceiptWrite!: () => void;
       const receiptWriteGate = new Promise<void>((resolve) => {
         releaseReceiptWrite = resolve;
@@ -141,10 +151,16 @@ it.each([
         | undefined;
       const deliver = vi.fn<NativeSubagentMonitorRuntime["deliverAgentHarnessTaskCompletion"]>(
         (params) => {
-          const delivery = (async () => {
+          const delivery = (async (): ReturnType<
+            NativeSubagentMonitorRuntime["deliverAgentHarnessTaskCompletion"]
+          > => {
             if (holdInitialDelivery && params.result === "A result") {
               signalInitialDelivery();
               await initialDeliveryGate;
+              if (coldRestart) {
+                // End the old delivery owner without settling its durable pending result.
+                return { delivered: false, path: "direct" as const, recoveryBlocked: true };
+              }
             }
             return { delivered: true, path: "direct" as const };
           })();
@@ -166,6 +182,7 @@ it.each([
       let secondHost:
         | Awaited<ReturnType<typeof createAdmittedHostCapabilityTestFixture>>
         | undefined;
+      let resumedHost: typeof secondHost;
       let currentParent: ReturnType<typeof registerCodexNativeSubagentMonitor> | undefined;
       let current = first;
       let database: DatabaseSync | undefined;
@@ -306,7 +323,7 @@ it.each([
             result: scenario === "interrupted" ? undefined : "A result",
           }),
         );
-        currentParent = registerCodexNativeSubagentMonitor({
+        const rotatedRegistration: Parameters<typeof registerCodexNativeSubagentMonitor>[0] = {
           client: current.client,
           parentThreadId: nextBinding.threadId,
           requesterSessionKey: identity.sessionKey,
@@ -342,7 +359,8 @@ it.each([
               ),
           },
           runtime,
-        });
+        };
+        currentParent = registerCodexNativeSubagentMonitor(rotatedRegistration);
         currentParent.bindTurn("parent-b");
         if (scenario === "finishes-after-registration") {
           await finishInitialDelivery();
@@ -362,6 +380,118 @@ it.each([
             submissionId: "turn-b",
           }),
         );
+        if (coldRestart) {
+          await receiptWriteEntered;
+          await expect(receiptWrite).resolves.toBe(true);
+          const savedReceipts = bindingStore.readNativeSubagentSubmissions(identity, owner);
+          expect(savedReceipts).toEqual([
+            {
+              parentTurnId: "parent-b",
+              callId: "send-b",
+              childThreadId: "child-thread",
+              submissionId: "turn-b",
+              predecessorRunId: initialRunId,
+              predecessorNativeTurnId: "turn-a",
+            },
+          ]);
+          expect(rows()).toEqual(initialRows);
+          first.close();
+          releaseInitialDelivery();
+          await initialDelivery;
+          await currentParent.unregister();
+          firstHost.closeHost();
+          firstHost.closeAdmission();
+          secondHost.closeHost();
+          secondHost.closeAdmission();
+          expect(rows()).toEqual(initialRows);
+          database.close();
+          database = undefined;
+          resetPluginStateStoreForTests();
+          bindingStore = openBindingStore();
+          expect(bindingStore.readNativeSubagentSubmissions(identity, owner)).toEqual(
+            savedReceipts,
+          );
+          resumedHost = await createAdmittedHostCapabilityTestFixture({
+            ...hostParams,
+            runId: "cold-resumed-parent-run",
+          });
+          const resumedScope = resumedHost.agentHarnessTaskRuntimeScope;
+          if (!resumedScope) {
+            throw new Error("Cold resumed task scope missing.");
+          }
+          current = createClient();
+          const resumedRequest = current.request.getMockImplementation()!;
+          current.request.mockImplementation((method, params, options) =>
+            method === "thread/unsubscribe" ? {} : resumedRequest(method, params, options),
+          );
+          ensureCodexAppServerClientRuntime(current.client, { agentDir: stateDir });
+          await expect(
+            claimCodexAppServerLiveThread(current.client, nextBinding.threadId),
+          ).resolves.toBeDefined();
+          const history = threadRead({
+            turnId: "turn-b",
+            result: "B result",
+            previousResult: "A result",
+          });
+          history.thread.turns![0]!.id = "turn-a";
+          history.thread.turns![0]!.completedAt = Number(initialRows[0]!.ended_at) / 1000;
+          const predecessorRecovered = new Promise<void>((resolve) => {
+            releasePredecessorRecovery = resolve;
+          });
+          let historyReads = 0;
+          current.setThreadReadFactory("child-thread", async () => {
+            const readIndex = historyReads++;
+            if (scenario === "cold-restart-after-predecessor-recovery" && readIndex > 0) {
+              await predecessorRecovered;
+            }
+            return history;
+          });
+          database = new DatabaseSync(path.join(stateDir, "state", "openclaw.sqlite"), {
+            readOnly: true,
+          });
+          const resumedDelivery = vi.fn<
+            NativeSubagentMonitorRuntime["deliverAgentHarnessTaskCompletion"]
+          >(async (params) => {
+            if (params.result === "A result") {
+              releasePredecessorRecovery();
+              return { delivered: false, path: "direct", recoveryPending: true };
+            }
+            return { delivered: true, path: "direct" };
+          });
+          currentParent = registerCodexNativeSubagentMonitor({
+            ...rotatedRegistration,
+            client: current.client,
+            taskRuntimeScope: resumedScope,
+            runtime: {
+              createAgentHarnessTaskRuntime,
+              deliverAgentHarnessTaskCompletion: resumedDelivery,
+            },
+          });
+          currentParent.bindTurn("cold-parent-turn");
+          await currentParent.unregister();
+          await vi.waitFor(() => {
+            expect(rows().find((row) => row.run_id === initialRunId)).toEqual(initialRows[0]);
+            expect({
+              successor: rows().find((row) => row.run_id === followupRunId),
+              pendingReceipts: bindingStore.readNativeSubagentSubmissions(identity, owner),
+            }).toMatchObject({
+              successor: {
+                status: "succeeded",
+                delivery_status: "delivered",
+                terminal_summary: "B result",
+              },
+              pendingReceipts: [],
+            });
+          });
+          expect(rows().find((row) => row.run_id === initialRunId)).toEqual(initialRows[0]);
+          const followup = rows().find((row) => row.run_id === followupRunId)!;
+          expect(JSON.parse(String(followup.detail_json))).toMatchObject({
+            nativeTurnId: "turn-b",
+            nativeHistory: initialOwner,
+          });
+          expect(bindingStore.readNativeSubagentSubmissions(identity, owner)).toEqual([]);
+          return;
+        }
         if (retireBeforeAdmission) {
           await receiptWriteEntered;
           if (scenario === "retired-before-admission") {
@@ -494,10 +624,14 @@ it.each([
           }
         }
       } finally {
+        releasePredecessorRecovery();
         releaseReceiptWrite();
         releaseInitialDelivery();
         await receiptWrite?.catch(() => undefined);
         await initialDelivery;
+        if (coldRestart) {
+          codexNativeSubagentMonitorRuntime.retireParent(current.client, "rotated-parent");
+        }
         first.close();
         current.close();
         await initialParent.unregister();
@@ -505,6 +639,8 @@ it.each([
         database?.close();
         secondHost?.closeHost();
         secondHost?.closeAdmission();
+        resumedHost?.closeHost();
+        resumedHost?.closeAdmission();
         firstHost.closeHost();
         firstHost.closeAdmission();
         resetPluginStateStoreForTests();

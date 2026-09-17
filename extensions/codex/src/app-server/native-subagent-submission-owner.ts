@@ -503,6 +503,9 @@ export class CodexNativeSubagentSubmissionOwner {
     custody: SubmissionCustody,
   ): Promise<JsonObject | undefined> {
     const { receipt } = custody;
+    if (!this.dependencies.prepareReceiver(state, receipt.childThreadId)) {
+      return undefined;
+    }
     const revision = this.dependencies.recovery.retainThreadStatusRevision(receipt.childThreadId);
     try {
       const response = await this.dependencies.client.request(
