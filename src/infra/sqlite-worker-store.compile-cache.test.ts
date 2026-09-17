@@ -53,7 +53,11 @@ describe.skipIf(Boolean(process.versions.bun))("SQLite store worker compile cach
     );
     const store = await openSqliteWorkerStore<{
       directory: { input: undefined; output: string | undefined };
-    }>({ moduleUrl: pathToFileURL(modulePath), databasePath: path.join(root, "store.sqlite") });
+    }>({
+      moduleUrl: pathToFileURL(modulePath),
+      databasePath: path.join(root, "store.sqlite"),
+      input: undefined,
+    });
     const expectedDirectory =
       disable === undefined
         ? cache === "explicit"
