@@ -284,6 +284,36 @@ describe("qa scenario catalog causality", () => {
     expect(actions.some((action) => (action as { call?: string }).call === "sleep")).toBe(false);
   });
 
+  it("keeps full-access restart delivery independent from subagent completion handoff", () => {
+    const scenario = requireFlowScenario(readQaScenarioById("gateway-restart-full-access-live"));
+    const prompt =
+      typeof scenario.execution.config?.prompt === "string" ? scenario.execution.config.prompt : "";
+    const actions = scenario.execution.flow?.steps[1]?.actions ?? [];
+    const outboundIndex = actions.findIndex(
+      (action) =>
+        (action as { call?: string; saveAs?: string }).call === "waitForOutboundMessage" &&
+        (action as { saveAs?: string }).saveAs === "outbound",
+    );
+    const childIndex = actions.findIndex(
+      (action) =>
+        (action as { call?: string; saveAs?: string }).call === "waitForCondition" &&
+        (action as { saveAs?: string }).saveAs === "childTask",
+    );
+    const childWait = actions[childIndex] as
+      | { args?: Array<{ lambda?: { expr?: string } }> }
+      | undefined;
+
+    expect(prompt).toContain("expectsCompletionMessage false");
+    expect(prompt).toContain("do not call sessions_yield or wait for the child");
+    expect(childWait?.args?.[0]?.lambda?.expr).toContain("task.status === 'completed'");
+    expect(childWait?.args?.[0]?.lambda?.expr).toContain("task.terminalOutcome === 'succeeded'");
+    expect(childWait?.args?.[0]?.lambda?.expr).toContain(
+      "task.deliveryStatus === 'not_applicable'",
+    );
+    expect(outboundIndex).toBeGreaterThanOrEqual(0);
+    expect(childIndex).toBeGreaterThan(outboundIndex);
+  });
+
   it.each(["gateway-restart-inflight-run", "gateway-restart-multi-live"] as const)(
     "ignores pre-scenario gateway sentinel logs during %s recovery",
     async (scenarioId) => {
