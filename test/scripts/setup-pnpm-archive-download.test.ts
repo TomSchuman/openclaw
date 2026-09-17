@@ -2,6 +2,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { expectDefined } from "@openclaw/normalization-core";
 import { afterEach, describe, expect, it } from "vitest";
 import { parse } from "yaml";
 import { useAutoCleanupTempDirTracker } from "../helpers/temp-dir.js";
@@ -18,6 +19,7 @@ function fixture(options: { platform?: string; arch?: string; glibc?: boolean } 
   const image = path.join(root, "image");
   const registry = path.join(root, "registry");
   const runner = path.join(root, "runner");
+  const store = path.join(root, "store");
   const bin = path.join(root, "bin");
   for (const dir of [image, registry, runner, bin]) {
     fs.mkdirSync(dir);
@@ -75,6 +77,7 @@ cp "$FIXTURE_REGISTRY/$name" "$out"
     image,
     registry,
     runner,
+    store,
     calls,
     spec,
     run(extraEnv: NodeJS.ProcessEnv = {}, selected = spec) {
@@ -85,6 +88,7 @@ cp "$FIXTURE_REGISTRY/$name" "$out"
           RUNNER_TEMP: runner,
           CURL_CALLS: calls,
           FIXTURE_REGISTRY: registry,
+          PNPM_CONFIG_STORE_DIR: store,
           ...extraEnv,
         },
       });
@@ -144,6 +148,38 @@ describe("pinned pnpm cold bootstrap", () => {
     expect(fs.existsSync(f.calls)).toBe(false);
   });
 
+  it("bootstraps from the warmed store while archive downloads are unavailable", () => {
+    const f = fixture();
+    const cold = f.run();
+    expect(cold.status, cold.stderr).toBe(0);
+    fs.unlinkSync(f.calls);
+    fs.rmSync(cold.stdout.trim(), { recursive: true });
+    const warm = f.run({ CURL_FIXTURE_EXIT: "35", COREPACK_ENABLE_NETWORK: "0" });
+    expect(warm.status, warm.stderr).toBe(0);
+    expect(warm.stdout.trim()).not.toBe("");
+    expect(fs.existsSync(f.calls)).toBe(false);
+    expect(fs.readFileSync(path.join(warm.stdout.trim(), "v1/pnpm/12.4.0/pnpm"), "utf8")).toBe(
+      "wrapper-fixture\n",
+    );
+  });
+
+  it.each(["pnpm-12.4.0.tgz", "exe.linux-x64-12.4.0.tgz"])(
+    "repairs unauthenticated cached %s through the cold download path",
+    (name) => {
+      const f = fixture();
+      const cold = f.run();
+      expect(cold.status, cold.stderr).toBe(0);
+      fs.unlinkSync(f.calls);
+      fs.writeFileSync(path.join(f.store, "toolchain", name), "substituted bytes");
+      const repaired = f.run();
+      expect(repaired.status, repaired.stderr).toBe(0);
+      expect(fs.readFileSync(f.calls, "utf8").trim().split("\n")).toHaveLength(1);
+      expect(fs.readFileSync(path.join(f.store, "toolchain", name))).toEqual(
+        fs.readFileSync(path.join(f.registry, name)),
+      );
+    },
+  );
+
   it.each(["pnpm-12.4.0.tgz", "exe.linux-x64-12.4.0.tgz"])(
     "rejects substituted downloaded %s and removes incomplete state",
     (name) => {
@@ -182,6 +218,41 @@ describe("pinned pnpm cold bootstrap", () => {
 });
 
 describe("pnpm version output owns its failure", () => {
+  it.each([false, true])(
+    "restores the store root before pnpm runs (configured: %s)",
+    (configured) => {
+      const root = tempDirs.make("pnpm-store-root-");
+      const output = path.join(root, "outputs");
+      const envFile = path.join(root, "env");
+      const store = path.join(root, configured ? "custom-store" : ".cache/openclaw-pnpm-store");
+      const action = parse(
+        fs.readFileSync(".github/actions/setup-pnpm-store-cache/action.yml", "utf8"),
+      );
+      const steps = action.runs.steps as Array<{ name: string; run: string }>;
+      const resolve = steps.findIndex((step) => step.name === "Resolve pnpm store path");
+      const restore = steps.findIndex((step) => step.name === "Restore pnpm store cache");
+      const bootstrap = steps.findIndex((step) => step.name === "Setup pnpm from packageManager");
+      expect(resolve).toBeLessThan(restore);
+      expect(restore).toBeLessThan(bootstrap);
+      const run = expectDefined(steps[resolve], "Resolve pnpm store path").run;
+      const result = spawnSync("bash", ["-eu", "-c", `pnpm() { return 99; }\n${run}`], {
+        encoding: "utf8",
+        env: {
+          PATH: process.env.PATH,
+          GITHUB_WORKSPACE: root,
+          GITHUB_OUTPUT: output,
+          GITHUB_ENV: envFile,
+          ...(configured ? { PNPM_CONFIG_STORE_DIR: store } : {}),
+        },
+      });
+      expect(result.status, result.stderr).toBe(0);
+      expect(fs.readFileSync(output, "utf8")).toBe(`path=${store}\n`);
+      expect(fs.readFileSync(envFile, "utf8")).toBe(
+        `PNPM_CONFIG_STORE_DIR=${store}\nPNPM_CONFIG_CACHE_DIR=${store}/cache\n`,
+      );
+    },
+  );
+
   it.each([0, 42])("preserves the version probe exit status %s", (status) => {
     const root = tempDirs.make("pnpm-version-step-");
     const output = path.join(root, "outputs");
