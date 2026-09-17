@@ -2,17 +2,19 @@ import { createHash } from "node:crypto";
 import { expectDefined } from "@openclaw/normalization-core";
 import { asFiniteNumber } from "@openclaw/normalization-core/number-coercion";
 import { asOptionalRecord as readRecord } from "@openclaw/normalization-core/record-coerce";
-import { normalizeOptionalString } from "@openclaw/normalization-core/string-coerce";
 import { OPENCLAW_RUNTIME_CONTEXT_CUSTOM_TYPE } from "../agents/internal-runtime-context.js";
 import { isHeartbeatOkResponse, isHeartbeatUserMessage } from "../auto-reply/heartbeat-filter.js";
 import { HEARTBEAT_PROMPT } from "../auto-reply/heartbeat.js";
 import {
   isCompletionReportInputProvenance,
+  isSubagentCoordinationInputProvenance,
   INTER_SESSION_PROMPT_PREFIX_BASE,
   normalizeInputProvenance,
   stripInterSessionPromptPrefixForDisplay,
 } from "../sessions/input-provenance.js";
 import { parseAgentSessionKey } from "../sessions/session-key-utils.js";
+import { readSessionTranscriptRunId } from "../sessions/transcript-events.js";
+import { buildRunUserTurnIdempotencyKey } from "../sessions/user-turn-transcript.metadata.js";
 import { projectAssistantDisplayContent } from "../shared/assistant-display-content.js";
 import { extractAssistantPhaseText } from "../shared/chat-message-content.js";
 import { isOpenClawDeliveryMirrorAssistantMessage } from "../shared/transcript-only-openclaw-assistant.js";
@@ -30,6 +32,89 @@ import {
 } from "./chat-display-projection.helpers.js";
 
 type TtsSupplementMarker = { textSha256?: string; spokenText?: string };
+
+export type SubagentCoordinationDisplayResolver = {
+  assertCurrent?: () => void;
+  isSubagentSession: (sessionKey: string) => boolean;
+  isSubagentRunMessage: (runId: string, messageSeq: number | undefined) => boolean;
+};
+
+export function isSubagentCoordinationHistoryInput(
+  message: Record<string, unknown>,
+  isSubagentSession?: SubagentCoordinationDisplayResolver["isSubagentSession"],
+): boolean {
+  if (message.role !== "user") {
+    return false;
+  }
+  if (isSubagentCoordinationInputProvenance(message.provenance)) {
+    return true;
+  }
+  const provenance = normalizeInputProvenance(message.provenance);
+  return Boolean(
+    provenance?.kind === "inter_session" &&
+    provenance.sourceTool === "sessions_send" &&
+    provenance.sourceSessionKey &&
+    isSubagentSession?.(provenance.sourceSessionKey),
+  );
+}
+
+/** Keep coordination in the model transcript while projecting only human-facing outcomes. */
+export function createSubagentCoordinationHistoryProjection(
+  resolver?: SubagentCoordinationDisplayResolver,
+) {
+  const hiddenInputKeys = new Set<string>();
+  const visibleInputKeys = new Set<string>();
+  const visibleSteerRunIds = new Set<string>();
+  return (messages: unknown[]): unknown[] => {
+    resolver?.assertCurrent?.();
+    const projected = messages.map((message) => {
+      const record = readRecord(message);
+      if (!record) {
+        return message;
+      }
+      const metadata = readRecord(record["__openclaw"]);
+      if (isSubagentCoordinationHistoryInput(record, resolver?.isSubagentSession)) {
+        const inputKey = record.idempotencyKey ?? metadata?.idempotencyKey;
+        // Steering belongs to an already-running turn, not the sender's requested run.
+        if (typeof inputKey === "string" && !metadata?.steerTargetRunId) {
+          hiddenInputKeys.add(inputKey);
+        }
+        return record.display === false ? record : { ...record, display: false };
+      }
+      const runId = readSessionTranscriptRunId(record);
+      if (record.role === "user") {
+        const inputKey = record.idempotencyKey ?? metadata?.idempotencyKey;
+        if (typeof inputKey === "string") {
+          visibleInputKeys.add(inputKey);
+        }
+        const steerTargetRunId = metadata?.steerTargetRunId ?? runId;
+        if (typeof steerTargetRunId === "string") {
+          visibleSteerRunIds.add(steerTargetRunId);
+        }
+        return message;
+      }
+      if (record.display === false) {
+        return message;
+      }
+      if (
+        (record.role === "assistant" || record.role === "toolResult" || record.role === "custom") &&
+        runId &&
+        !visibleSteerRunIds.has(runId) &&
+        (hiddenInputKeys.has(buildRunUserTurnIdempotencyKey(runId)) ||
+          (!visibleInputKeys.has(buildRunUserTurnIdempotencyKey(runId)) &&
+            resolver?.isSubagentRunMessage(
+              runId,
+              typeof metadata?.seq === "number" ? metadata.seq : undefined,
+            )))
+      ) {
+        return { ...record, display: false };
+      }
+      return message;
+    });
+    resolver?.assertCurrent?.();
+    return projected;
+  };
+}
 
 function readTtsSupplementMarker(
   message: Record<string, unknown>,
@@ -488,25 +573,12 @@ function stripInterSessionPromptPrefixFromContent(content: unknown): unknown {
   });
 }
 
-function extractPromptPrefixField(text: string, field: string): string | undefined {
-  const prefixIndex = text.indexOf(INTER_SESSION_PROMPT_PREFIX_BASE);
-  if (prefixIndex === -1) {
-    return undefined;
-  }
-  const lineEnd = text.indexOf("\n", prefixIndex);
-  const header = lineEnd === -1 ? text.slice(prefixIndex) : text.slice(prefixIndex, lineEnd);
-  const escapedField = field.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const match = new RegExp(`(?:^|\\s)${escapedField}=([^\\s]+)`).exec(header);
-  return normalizeOptionalString(match?.[1]);
-}
-
 function resolveSessionsSendForwardedSenderSession(
   message: Record<string, unknown>,
 ): { sessionKey?: string; agentId?: string } | undefined {
+  // Only structured provenance identifies the sender; prompt headers are display text.
   const provenance = normalizeInputProvenance(message.provenance);
-  const text = extractProjectedText(message.content ?? message.text);
-  const sourceSessionKey =
-    provenance?.sourceSessionKey ?? extractPromptPrefixField(text, "sourceSession");
+  const sourceSessionKey = provenance?.sourceSessionKey;
   const agentId = parseAgentSessionKey(sourceSessionKey)?.agentId;
   return sourceSessionKey
     ? { sessionKey: sourceSessionKey, ...(agentId ? { agentId } : {}) }

@@ -73,6 +73,7 @@ export type {
   SessionEntryPatchOptions,
   SessionEntryPatchResult,
   SessionEntryReadScope,
+  SessionEntryReadSource,
   SessionEntryReadView,
   SessionEntryReplacement,
   SessionEntryReplacementSnapshot,
@@ -171,6 +172,7 @@ export {
   resolveSessionEntrySelection,
   updateResolvedSessionEntry,
   upsertSessionEntryCore,
+  withSessionEntryReadOnlyScope,
 } from "./session-accessor.entry.js";
 export {
   readSessionIdentityEvidenceBatch,
@@ -201,10 +203,7 @@ export {
   recordSessionParticipant,
   type RecordSessionParticipantResult,
 } from "./session-accessor.sqlite-participants.js";
-export {
-  listSessionParticipantsReadOnly,
-  type SessionParticipantRecord,
-} from "./session-accessor.sqlite-participant-projection.js";
+export { type SessionParticipantRecord } from "./session-accessor.sqlite-participant-projection.js";
 export {
   listCanonicalSessionRepairFacts,
   loadCanonicalSessionRepairEntries,
@@ -337,4 +336,4 @@ export {
   appendSessionTranscriptReport,
   readLatestSessionTranscriptReport,
 } from "./session-accessor.sqlite-transcript-reports.js";
-export type { SessionEntryReadSource } from "./session-accessor.sqlite-exact-read.js";
+export { listSessionParticipantsReadOnly } from "./session-accessor.sqlite-participant-read.js";

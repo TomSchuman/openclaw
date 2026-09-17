@@ -12,7 +12,6 @@ import {
   isModelSelectionLocked,
   repairProviderWrappedModelOverride,
 } from "../../sessions/model-overrides.js";
-import { resolveAgentConfig } from "../agent-scope.js";
 import { loadManifestModelCatalog } from "../model-catalog.js";
 import type { ModelManifestNormalizationContext } from "../model-ref-shared.js";
 import {
@@ -21,51 +20,31 @@ import {
 } from "../model-visibility-policy.js";
 import { hasResolvedThinkingCatalogEntry } from "../thinking-runtime.js";
 
-function resolveSelectionCatalogDemand(params: {
-  cfg: OpenClawConfig;
-  agentId: string;
+function resolveDeferredSelection(params: {
   defaultProvider: string;
   defaultModel: string;
   sessionEntry: SessionEntry | undefined;
   hasExplicitRunOverride: boolean;
-  visibilityPolicy: ModelVisibilityPolicy;
+  pluginsEnabled: boolean;
   metadataSnapshot: PluginMetadataSnapshot | undefined;
-}): "none" | "required" | "deferred" {
-  const agentModels = resolveAgentConfig(params.cfg, params.agentId)?.models;
-  const hasConfiguredModels =
-    Object.keys(params.cfg.agents?.defaults?.models ?? {}).length > 0 ||
-    Object.keys(agentModels ?? {}).length > 0;
-  if (params.visibilityPolicy.allowAny && !hasConfiguredModels) {
-    return "none";
-  }
+}) {
   const entry = params.sessionEntry;
   if (
+    !params.pluginsEnabled ||
     !entry ||
     params.hasExplicitRunOverride ||
     !params.metadataSnapshot ||
-    params.visibilityPolicy.hasProviderWildcards ||
-    params.visibilityPolicy.exactModelRefs.some((ref) => parseProviderModelRef(ref) === null) ||
     entry.modelOverrideSource !== "auto" ||
     !hasSessionAutoModelSelection(entry) ||
     hasSessionActiveAutoModelFallback(entry) ||
     resolveSessionModelOverrideRouteResolution(entry) !== "resolved"
   ) {
-    return "required";
+    return undefined;
   }
   const provider = entry.providerOverride?.trim();
   const model = entry.modelOverride?.trim();
-  if (
-    !provider ||
-    !model ||
-    provider.includes("/") ||
-    model.includes("/") ||
-    !hasResolvedThinkingCatalogEntry({
-      catalog: params.visibilityPolicy.configuredCatalog,
-      provider,
-      model,
-    })
-  ) {
-    return "required";
+  if (!provider || !model || provider.includes("/") || model.includes("/")) {
+    return undefined;
   }
   // Canonical repair can replace the route that justified deferral.
   if (
@@ -76,15 +55,15 @@ function resolveSelectionCatalogDemand(params: {
       defaultModel: params.defaultModel,
     }).updated
   ) {
-    return "required";
+    return undefined;
   }
   // A catalog owner could add donor facts or make the stored route cataloged.
   const normalizedProvider = normalizeProviderId(provider);
   return [...params.metadataSnapshot.owners.modelCatalogProviders.keys()].some(
     (catalogProvider) => normalizeProviderId(catalogProvider) === normalizedProvider,
   )
-    ? "required"
-    : "deferred";
+    ? undefined
+    : { provider, model };
 }
 
 export function prepareCommandModelCatalog(params: {
@@ -103,13 +82,12 @@ export function prepareCommandModelCatalog(params: {
   const policyParams = {
     cfg,
     defaultProvider: params.defaultProvider,
-    defaultModel: params.defaultModel,
+    defaultModel: { provider: params.defaultProvider, model: params.defaultModel },
     agentId: params.agentId,
     allowManifestNormalization: true,
     allowPluginNormalization: pluginsEnabled,
     ...params.modelManifestContext,
   };
-  const configuredPolicy = createModelVisibilityPolicy({ ...policyParams, catalog: [] });
   let fullCatalog:
     | {
         catalog: ReturnType<typeof loadManifestModelCatalog>;
@@ -119,7 +97,12 @@ export function prepareCommandModelCatalog(params: {
   const loadFullCatalog = () => {
     if (!fullCatalog) {
       const catalog = pluginsEnabled
-        ? loadManifestModelCatalog({ config: cfg, workspaceDir, metadataSnapshot })
+        ? loadManifestModelCatalog({
+            config: cfg,
+            workspaceDir,
+            metadataSnapshot,
+            fallbackToMetadataScan: false,
+          })
         : [];
       fullCatalog = {
         catalog,
@@ -128,17 +111,24 @@ export function prepareCommandModelCatalog(params: {
     }
     return fullCatalog;
   };
-  const demand = resolveSelectionCatalogDemand({
-    ...params,
-    visibilityPolicy: configuredPolicy,
-  });
-  const loaded = demand === "required" ? loadFullCatalog() : undefined;
-  return {
-    visibilityPolicy: loaded?.policy ?? configuredPolicy,
-    modelCatalog: loaded?.catalog ?? null,
-    allowedModelCatalog: loaded?.policy.allowedCatalog ?? [],
-    ...(demand === "deferred"
-      ? { loadDeferredThinkingCatalog: () => loadFullCatalog().policy.catalog }
-      : {}),
-  };
+  const selection = resolveDeferredSelection(params);
+  if (selection) {
+    const configuredPolicy = createModelVisibilityPolicy({ ...policyParams, catalog: [] });
+    if (
+      !configuredPolicy.hasProviderWildcards &&
+      configuredPolicy.exactModelRefs.every((ref) => parseProviderModelRef(ref) !== null) &&
+      hasResolvedThinkingCatalogEntry({
+        catalog: configuredPolicy.configuredCatalog,
+        ...selection,
+      })
+    ) {
+      return {
+        visibilityPolicy: configuredPolicy,
+        modelCatalog: [],
+        loadDeferredThinkingCatalog: () => loadFullCatalog().policy.catalog,
+      };
+    }
+  }
+  const loaded = loadFullCatalog();
+  return { visibilityPolicy: loaded.policy, modelCatalog: loaded.catalog };
 }

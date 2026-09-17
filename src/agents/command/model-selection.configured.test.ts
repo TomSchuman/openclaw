@@ -174,6 +174,34 @@ describe("command selection with configured model facts", () => {
     expect(sessionPersistence.persistAgentSession).not.toHaveBeenCalled();
   });
 
+  it("retains declared capabilities for an unrestricted unconfigured selection", async () => {
+    const fixture = createFixture();
+    delete fixture.defaults.modelPolicy;
+    fixture.defaults.model = { primary: "remote/unconfigured" };
+    delete fixture.cfg.models;
+    fixture.store[sessionKey] = { sessionId: "configured-child", updatedAt: 1 };
+    const declared: ModelCatalogEntry = {
+      ...catalogEntry("remote", "unconfigured"),
+      input: ["text", "image"],
+    };
+    fixture.inventory.mockReturnValue([declared]);
+    const before = structuredClone({ cfg: fixture.cfg, store: fixture.store });
+
+    const selected = await fixture.select({
+      configuredThinkingCatalog: [],
+      requestedThinkLevel: "off",
+    });
+
+    expect(selected).toMatchObject({
+      provider: "remote",
+      model: "unconfigured",
+      effectiveTurnThinkLevel: "off",
+    });
+    expect(selected.thinkingCatalog).toContainEqual(expect.objectContaining(declared));
+    expect({ cfg: fixture.cfg, store: fixture.store }).toEqual(before);
+    expect(sessionPersistence.persistAgentSession).not.toHaveBeenCalled();
+  });
+
   it.each(["raw", "resolved"] as const)(
     "keeps a literal configured model that collides with an alias (%s stored route)",
     async (route) => {
