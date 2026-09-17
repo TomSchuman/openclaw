@@ -31,6 +31,22 @@ does not provide it. Other Node shards do not pay that setup cost.
 
 Current targets share one checkout/setup per fast contract family. The two weighted plugin selections still run as separate `test:contracts:plugins` processes; the two channel selections still run separate `test:contracts:channels` invocations, each retaining its four owning configs, four project slots and one worker per project. The envelopes run sequentially, and any nonzero exit stops the job before another envelope is admitted. Frozen targets keep their original matrix rows and execute one envelope per row. Runner routing, caches, worker budgets and aggregate-gate selection stay unchanged. In main run `33704083233`, the separate plugin bodies totaled 94 seconds and the channel bodies 145 seconds; those sums support consolidation but are not measured combined durations.
 
+The dependency warmer publishes the completed pnpm store immediately after setup,
+before unrelated SDK, build, or transform work can fail. All cache-enabled Node
+setups use the same workspace-local store path, including store-only readers;
+Actions includes that path in cache compatibility. Pnpm's side-effects cache
+carries native postinstall outputs such as Matrix crypto's binary and version
+marker, so a compatible warm install skips the download. Cold caches and changed
+native build inputs still require the upstream asset.
+Node discovery scans only the toolcache's executable levels, avoiding bundled
+npm dependency trees before selecting an already-installed runtime.
+
+In hybrid mode, one additional `ubuntu-24.04` warmer row installs and saves only
+the hosted dependency store. Blacksmith and GitHub-hosted cache backends are
+separate; warming Linux only on Blacksmith leaves hosted checks on old seeds.
+The existing Linux row retains full warming, and all-Blacksmith/all-GitHub modes
+retain their two-row matrix. This adds no Blacksmith runner registrations.
+
 ### Blacksmith runner capacity
 
 Npm preflight retains `blacksmith-32vcpu-ubuntu-2404`. Main CI previously used
@@ -142,7 +158,7 @@ The `agents-tools` graph also owns shell/tool tests, nested sandbox tests, manag
 
 Android Play and ThirdParty unit/lint pairs keep separate Gradle processes but capture one UTC build timestamp for both commands through the existing `openclawBuildTimestamp` property. Reusing that instant avoids regenerating `BuildConfig` solely because lint starts later. Unit-only compatibility tasks and other Android rows retain their existing metadata behavior; task coverage, failure ordering, memory settings, and job budgets are unchanged.
 
-On hosts with less than 24 GiB RAM, serial plugin lint runs use the same eight-directory chunks as Windows. This bounds each type-aware process while covering every plugin and root source file. Outside Windows, explicit full-speed or parallel overrides keep the previous unsplit workload. The Windows chunk-size override remains Windows-only. Lint prepares only the SDK declaration tree; the separate package TypeScript boundary check still prepares the SDK and plugin declarations.
+On hosts with less than 24 GiB RAM, serial plugin lint runs use eight-directory chunks by default. Automatic Linux CI uses sixteen-directory chunks with at least four CPUs and 15 GiB of verified physical and cgroup memory capacity, including ancestor limits. Unknown or smaller capacity, local runs, Windows, explicit plugin stripes, and explicit serial selections retain eight-directory chunks. This amortizes repeated type-graph startup while covering every plugin and root source file. Outside Windows, explicit full-speed or parallel overrides keep the previous unsplit workload. The Windows chunk-size override remains Windows-only. Lint prepares only the SDK declaration tree; the separate package TypeScript boundary check still prepares the SDK and plugin declarations.
 
 For current targets using the `github` profile, plugin lint chunks are divided deterministically across six existing jobs. Each of the five core-lint jobs runs its core Program, then its plugin chunks; `check-lint` owns the sixth stripe, script lint, and formatting. Every selected chunk retains its original arguments and runs sequentially under the existing resource and artifact-ownership limits. This removes the single-job serial tail without adding jobs or increasing chunk sizes. Hybrid, Blacksmith, release gates, and historical targets without extension-stripe support retain their existing plugin-lint ownership.
 

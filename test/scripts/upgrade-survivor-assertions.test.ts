@@ -458,6 +458,31 @@ describe("upgrade recovery result assertions", () => {
       }),
   );
 
+  it.each([
+    ["qualified advisory", "openclaw doctor", 86, "package-post-install-doctor", true],
+    ["wrong step", "global update", 86, "package-post-install-doctor", false],
+    ["wrong exit", "openclaw doctor", 1, "package-post-install-doctor", false],
+    ["missing kind", "openclaw doctor", 86, undefined, false],
+    ["wrong kind", "openclaw doctor", 86, "recoverable-maintenance", false],
+  ] as const)(
+    "accepts only the package post-install Doctor advisory (%s)",
+    (_case, name, exitCode, kind, accepted) => {
+      const result = runJsonAssertion(
+        "assert-successful-update-json",
+        {
+          status: "ok",
+          after: { version: "2026.8.1" },
+          steps: [
+            { name: "global install swap", exitCode: 0 },
+            { name, exitCode, ...(kind ? { advisory: { kind } } : {}) },
+          ],
+        },
+        "2026.8.1",
+      );
+      expect(result.status, result.stderr).toBe(accepted ? 0 : 1);
+    },
+  );
+
   describe("missing Codex migration update result", () => {
     const scenarioEnv = {
       OPENCLAW_UPGRADE_SURVIVOR_SCENARIO: "missing-configured-plugin-migration",
@@ -1921,7 +1946,7 @@ process.stdout.write(sessionDir + "\\n");
     }
   });
 
-  it("accepts the ACPX OpenClaw tools bridge scenario during seed", () => {
+  it("requires saved ACP identity and model selection to survive the bridge scenario", () => {
     const root = mkdtempSync(join(tmpdir(), "openclaw-upgrade-survivor-acpx-"));
     try {
       const stateDir = join(root, "state");
@@ -1938,6 +1963,45 @@ process.stdout.write(sessionDir + "\\n");
         },
         stdio: "pipe",
       });
+      const seeded = JSON.parse(readFileSync(join(stateDir, "sessions", "sessions.json"), "utf8"));
+      const acp = seeded["slack:channel:CUPGRADE"].acp;
+      expect(acp).toMatchObject({
+        backend: "acpx",
+        identity: {
+          acpxSessionId: "upgrade-acpx-session",
+          agentSessionId: "upgrade-agent-session",
+        },
+        runtimeOptions: { model: "gpt-5.5", runtimeMode: "plan" },
+      });
+      const assertSavedAcp = (saved: unknown) =>
+        runSessionStateAssertion(
+          (migratedStateDir) => {
+            writeMigratedSessionState(migratedStateDir);
+            const db = new DatabaseSync(
+              join(migratedStateDir, "agents", "main", "agent", "openclaw-agent.sqlite"),
+            );
+            try {
+              db.prepare("UPDATE session_nodes SET entry_json = ? WHERE session_key = ?").run(
+                JSON.stringify({ acp: saved }),
+                "agent:main:slack:channel:cupgrade",
+              );
+            } finally {
+              db.close();
+            }
+            return undefined;
+          },
+          { scenario: "acpx-openclaw-tools-bridge" },
+        );
+      expect(() => assertSavedAcp(acp)).not.toThrow();
+      expect(() => assertSavedAcp(undefined)).toThrow(
+        "saved ACP session or model selection changed",
+      );
+      expect(() =>
+        assertSavedAcp({
+          ...acp,
+          runtimeOptions: { ...acp.runtimeOptions, model: "changed-model" },
+        }),
+      ).toThrow("saved ACP session or model selection changed");
     } finally {
       rmSync(root, { force: true, recursive: true });
     }
