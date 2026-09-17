@@ -19,11 +19,12 @@ function fixture(options: { platform?: string; arch?: string; glibc?: boolean } 
   const image = path.join(root, "image");
   const registry = path.join(root, "registry");
   const runner = path.join(root, "runner");
-  const store = path.join(root, "store");
+  const storeDir = path.join(root, "store");
   const bin = path.join(root, "bin");
-  for (const dir of [image, registry, runner, bin]) {
+  for (const dir of [image, registry, runner, bin, storeDir]) {
     fs.mkdirSync(dir);
   }
+  const store = fs.realpathSync.native(storeDir);
   function archive(name: string, native: boolean) {
     const stage = path.join(root, native ? "native" : "wrapper");
     fs.mkdirSync(stage);
@@ -118,7 +119,7 @@ describe("pinned pnpm cold bootstrap", () => {
     expect(fs.readdirSync(f.runner)).toEqual([]);
   });
 
-  it("authenticates both missing archives into the existing private Corepack layout", () => {
+  it("downloads authenticated registry archives when both the store and image are empty", () => {
     const f = fixture();
     const result = f.run();
     expect(result.status, result.stderr).toBe(0);
@@ -163,22 +164,30 @@ describe("pinned pnpm cold bootstrap", () => {
     );
   });
 
-  it.each(["pnpm-12.4.0.tgz", "exe.linux-x64-12.4.0.tgz"])(
-    "repairs unauthenticated cached %s through the cold download path",
-    (name) => {
-      const f = fixture();
-      const cold = f.run();
-      expect(cold.status, cold.stderr).toBe(0);
-      fs.unlinkSync(f.calls);
-      fs.writeFileSync(path.join(f.store, "toolchain", name), "substituted bytes");
-      const repaired = f.run();
-      expect(repaired.status, repaired.stderr).toBe(0);
-      expect(fs.readFileSync(f.calls, "utf8").trim().split("\n")).toHaveLength(1);
-      expect(fs.readFileSync(path.join(f.store, "toolchain", name))).toEqual(
-        fs.readFileSync(path.join(f.registry, name)),
-      );
-    },
-  );
+  it.each([
+    { name: "pnpm-12.4.0.tgz", fallback: "registry" },
+    { name: "exe.linux-x64-12.4.0.tgz", fallback: "registry" },
+    { name: "pnpm-12.4.0.tgz", fallback: "image" },
+    { name: "exe.linux-x64-12.4.0.tgz", fallback: "image" },
+  ])("repairs unauthenticated cached $name through the $fallback", ({ name, fallback }) => {
+    const f = fixture();
+    const cold = f.run();
+    expect(cold.status, cold.stderr).toBe(0);
+    fs.unlinkSync(f.calls);
+    fs.writeFileSync(path.join(f.store, "toolchain", name), "substituted bytes");
+    if (fallback === "image") {
+      for (const archive of fs.readdirSync(f.registry)) {
+        fs.copyFileSync(path.join(f.registry, archive), path.join(f.image, archive));
+      }
+    }
+    const repaired = f.run();
+    expect(repaired.status, repaired.stderr).toBe(0);
+    const calls = fs.existsSync(f.calls) ? fs.readFileSync(f.calls, "utf8").trim().split("\n") : [];
+    expect(calls).toHaveLength(fallback === "registry" ? 1 : 0);
+    expect(fs.readFileSync(path.join(f.store, "toolchain", name))).toEqual(
+      fs.readFileSync(path.join(f.registry, name)),
+    );
+  });
 
   it.each(["pnpm-12.4.0.tgz", "exe.linux-x64-12.4.0.tgz"])(
     "rejects substituted downloaded %s and removes incomplete state",
