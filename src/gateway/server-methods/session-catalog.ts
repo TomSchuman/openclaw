@@ -5,7 +5,6 @@ import {
   errorShape,
   type SessionCatalog,
   type SessionCatalogLocator,
-  type SessionCatalogShareRoute,
   type SessionsCatalogArchiveParams,
   type SessionsCatalogContinueParams,
   type SessionsCatalogListParams,
@@ -52,6 +51,7 @@ import {
   catalogRegistrationSnapshot,
 } from "./session-catalog-provider-access.js";
 import { readAuthorizedSessionCatalog } from "./session-catalog-read.js";
+import { catalogResult } from "./session-catalog-result.js";
 import { catalogStartHandler } from "./session-catalog-terminal-start.js";
 import {
   filterSessionCatalogHost,
@@ -273,29 +273,6 @@ function registrationOrRespond(catalogId: string, respond: RespondFn) {
   return registration;
 }
 
-function catalogResult(
-  provider: SessionCatalogProvider,
-  shareRoute: SessionCatalogShareRoute | undefined,
-  hosts: SessionCatalog["hosts"],
-  error?: SessionCatalog["error"],
-  createSession?: NonNullable<SessionCatalog["capabilities"]["createSession"]>,
-): SessionCatalog {
-  return {
-    id: provider.id,
-    label: provider.label,
-    capabilities: {
-      continueSession: Boolean(provider.continueSession || provider.copyToGatewaySession),
-      archive: Boolean(provider.archive),
-      ...(provider.openTerminal ? { openTerminal: true } : {}),
-      ...(createSession ? { createSession } : {}),
-      ...(provider.startTerminalSession ? { startTerminal: true } : {}),
-    },
-    ...(shareRoute ? { shareRoute } : {}),
-    hosts,
-    ...(error ? { error } : {}),
-  };
-}
-
 export const sessionCatalogHandlers: GatewayRequestHandlers = {
   "sessions.catalog.list": async ({ params, respond, context, client, signal }) => {
     if (
@@ -335,7 +312,6 @@ export const sessionCatalogHandlers: GatewayRequestHandlers = {
     } else {
       selected = catalogRegistrations.providers;
     }
-    const providerAudiences = new Map(selected.map((provider) => [provider.id, provider.audience]));
     const config = context.getRuntimeConfig();
     const resolvedAgent = resolveAgentIdOrRespondError({
       rawAgentId: request.agentId,
@@ -346,6 +322,22 @@ export const sessionCatalogHandlers: GatewayRequestHandlers = {
     if (!resolvedAgent) {
       return;
     }
+    if (request.metadataOnly) {
+      respond(true, {
+        catalogs: selected.map((provider) => {
+          const createTarget = resolveProviderCreateTarget(provider, resolvedAgent.agentId, config);
+          return catalogResult(
+            provider,
+            catalogRegistrations.shareRoutes.get(provider),
+            [],
+            undefined,
+            createTarget.ok ? createTarget.target : undefined,
+          );
+        }),
+      });
+      return;
+    }
+    const providerAudiences = new Map(selected.map((provider) => [provider.id, provider.audience]));
     const search = normalizeSessionCatalogSearch(request.search);
     const allowHomeFallback = allowProcessHomeFallback(context.logGateway);
     // Cached provider enumeration is not permission. Each synchronous delivery gets current
@@ -476,16 +468,11 @@ export const sessionCatalogHandlers: GatewayRequestHandlers = {
       const catalogList = await Promise.all(
         selected.map(async (provider): Promise<SessionCatalog> => {
           const shareRoute = catalogRegistrations.shareRoutes.get(provider);
-          const createTarget = resolveProviderCreateTarget(provider, resolvedAgent.agentId, config);
-          const createSession = createTarget.ok
-            ? {
-                model: createTarget.target.model,
-                ...(provider.startTerminalSession ? { startTerminal: true as const } : {}),
-              }
-            : undefined;
+          const resolution = resolveProviderCreateTarget(provider, resolvedAgent.agentId, config);
+          const createTarget = resolution.ok ? resolution.target : undefined;
           const onHost = (host: SessionCatalog["hosts"][number]) => {
             requestEntries?.captureHostInstances(host, instances);
-            const catalog = catalogResult(provider, shareRoute, [host], undefined, createSession);
+            const catalog = catalogResult(provider, shareRoute, [host], undefined, createTarget);
             // Progressive frames are an optimization. The final RPC response remains
             // authoritative when a slow client drops an intermediate host update.
             progress.publish(catalog, instances);
@@ -508,9 +495,9 @@ export const sessionCatalogHandlers: GatewayRequestHandlers = {
             for (const host of hosts) {
               requestEntries?.captureHostInstances(host, instances);
             }
-            return catalogResult(provider, shareRoute, hosts, undefined, createSession);
+            return catalogResult(provider, shareRoute, hosts, undefined, createTarget);
           } catch (error) {
-            return catalogResult(provider, shareRoute, [], catalogError(error), createSession);
+            return catalogResult(provider, shareRoute, [], catalogError(error), createTarget);
           }
         }),
       );
