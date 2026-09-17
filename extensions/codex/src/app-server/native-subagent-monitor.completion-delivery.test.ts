@@ -24,7 +24,33 @@ import {
   threadRead,
   taskRecord,
 } from "./native-subagent-monitor.test-support.js";
-import type { JsonObject } from "./protocol.js";
+import type { CodexServerNotification, JsonObject } from "./protocol.js";
+
+function contextualNativeCompletion(
+  agentPath = "child-thread",
+  result = "The build passed.",
+): CodexServerNotification {
+  return {
+    method: "rawResponseItem/completed",
+    params: {
+      threadId: "parent-thread",
+      turnId: "parent-turn",
+      item: {
+        type: "message",
+        role: "user",
+        content: [
+          {
+            type: "input_text",
+            text: `<subagent_notification>\n${JSON.stringify({ agent_path: agentPath, status: { completed: result } })}\n</subagent_notification>`,
+          },
+        ],
+        internal_chat_message_metadata_passthrough: {
+          content_item_kinds: ["multi_agent.subagent_notification"],
+        },
+      },
+    },
+  };
+}
 
 describe("CodexNativeSubagentMonitor", () => {
   describe("native completion delivery ownership", () => {
@@ -109,17 +135,26 @@ describe("CodexNativeSubagentMonitor", () => {
         ],
       });
 
-    it.each([
-      { order: "native-first", final: "The build passed. The change is ready." },
-      { order: "terminal-first", final: "The build passed. The change is ready." },
-      { order: "native-first", final: "NO_REPLY" },
-    ])(
-      "preserves $final when native delivery and child completion arrive $order",
-      async ({ order, final }) => {
+    it.each(
+      ["agent-message", "contextual"].flatMap((receipt) => [
+        { receipt, order: "native-first", final: "The build passed. The change is ready." },
+        { receipt, order: "terminal-first", final: "The build passed. The change is ready." },
+        { receipt, order: "native-first", final: "NO_REPLY" },
+      ]),
+    )(
+      "preserves $final when $receipt delivery and child completion arrive $order",
+      async ({ receipt, order, final }) => {
         const client = createClient();
         const runtime = createRuntime();
-        const monitor = new CodexNativeSubagentMonitor(client as never, runtime);
-        const owner = registerParent(monitor);
+        ensureCodexAppServerClientRuntime(client.client, { agentDir: "/tmp/agent" });
+        const owner = codexNativeSubagentMonitorRuntime.register({
+          client: client.client,
+          parentThreadId: "parent-thread",
+          requesterSessionKey: "agent:main:discord:channel:C123",
+          taskRuntimeScope: createTaskScope(),
+          agentId: "main",
+          runtime,
+        });
         owner.bindTurn("parent-turn");
         await notifyChildStarted(client, "parent-thread", "child-thread", "/root/worker");
         const projector = new CodexAppServerEventProjector(
@@ -147,7 +182,9 @@ describe("CodexNativeSubagentMonitor", () => {
           if (order === "terminal-first") {
             await client.notify(completedChild());
           }
-          await client.notify(deliveredNativeCompletion());
+          await client.notify(
+            receipt === "contextual" ? contextualNativeCompletion() : deliveredNativeCompletion(),
+          );
           await answer(final, "parent-answer");
           if (order === "native-first") {
             await client.notify(completedChild());
@@ -251,27 +288,46 @@ describe("CodexNativeSubagentMonitor", () => {
       }
     });
 
-    it.each([
-      "other-turn",
-      "other-parent",
-      "other-child",
-      "ordinary-message",
-      "user-text",
-    ] as const)("does not acknowledge a completion from %s", async (source) => {
+    it.each(
+      ["agent-message", "contextual"].flatMap((kind) =>
+        [
+          "other-turn",
+          "other-parent",
+          "other-child",
+          "ordinary-message",
+          "user-text",
+          "different-result",
+          "quoted-fragment",
+        ].map((source) => ({ kind, source })),
+      ),
+    )("does not acknowledge a $kind completion from $source", async ({ kind, source }) => {
       const client = createClient();
       const runtime = createRuntime();
-      const monitor = new CodexNativeSubagentMonitor(client as never, runtime);
-      const owner = registerParent(monitor);
+      ensureCodexAppServerClientRuntime(client.client, { agentDir: "/tmp/agent" });
+      const owner = codexNativeSubagentMonitorRuntime.register({
+        client: client.client,
+        parentThreadId: "parent-thread",
+        requesterSessionKey: "agent:main:discord:channel:C123",
+        taskRuntimeScope: createTaskScope(),
+        agentId: "main",
+        runtime,
+      });
       owner.bindTurn("parent-turn");
       await notifyChildStarted(client, "parent-thread", "child-thread", "/root/worker");
-      const receipt = deliveredNativeCompletion();
+      const receipt =
+        kind === "contextual"
+          ? contextualNativeCompletion(
+              source === "other-child" ? "other-child" : "child-thread",
+              source === "different-result" ? "Unrelated result." : "The build passed.",
+            )
+          : deliveredNativeCompletion();
       const params = receipt.params as JsonObject;
       const item = params.item as JsonObject;
       if (source === "other-turn") {
         params.turnId = "older-turn";
       } else if (source === "other-parent") {
         params.threadId = "another-parent";
-      } else if (source === "other-child") {
+      } else if (source === "other-child" && kind === "agent-message") {
         item.author = "/root/another-child";
         item.content = [
           {
@@ -281,9 +337,20 @@ describe("CodexNativeSubagentMonitor", () => {
         ];
       } else if (source === "ordinary-message") {
         item.content = [{ type: "input_text", text: "Still working on the build." }];
-      } else {
+      } else if (source === "user-text") {
         item.type = "message";
         item.role = "user";
+        item.internal_chat_message_metadata_passthrough = { content_item_kinds: ["user.text"] };
+      } else if (source === "different-result" && kind === "agent-message") {
+        item.content = [
+          {
+            type: "input_text",
+            text: "Message Type: FINAL_ANSWER\nTask name: /root\nSender: /root/worker\nPayload:\nUnrelated result.",
+          },
+        ];
+      } else if (source === "quoted-fragment") {
+        const part = (item.content as JsonObject[])[0]!;
+        part.text = `Example: ${part.text}`;
       }
       try {
         await client.notify(completedChild());
