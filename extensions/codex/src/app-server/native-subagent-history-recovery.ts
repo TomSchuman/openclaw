@@ -15,7 +15,6 @@ import type {
   ChildState,
   ParentState,
   TaskRecoveryCandidate,
-  NativeSubagentAssignment,
   NativeSubagentMonitorClient,
   NativeTurnEnd,
   NativeTurnObservation,
@@ -24,7 +23,10 @@ import type {
   ThreadRecovery,
 } from "./native-subagent-monitor-types.js";
 import type { CodexNativeSubagentCompletion } from "./native-subagent-notification.js";
-import { readCodexNativeSubagentRunId } from "./native-subagent-task-ids.js";
+import {
+  readNativeTaskAssignment,
+  type NativeSubagentAssignment,
+} from "./native-subagent-task-ids.js";
 import type { JsonObject } from "./protocol.js";
 import { isJsonObject } from "./protocol.js";
 
@@ -205,14 +207,14 @@ export class CodexNativeSubagentHistoryRecovery {
     } catch {
       return false;
     }
-    return Boolean(
+    return (
       current &&
       current.taskId === task.taskId &&
       this.acceptsTask(current, candidate.parentState) &&
       this.shouldReconcileTask(current, now) &&
       isDeepStrictEqual(readCodexNativeSubagentHistoryOwner(current.detail), history) &&
       // Unstamped rows can recover only through the current native parent.
-      parentThreadId === (history?.parentThreadId ?? candidate.parentState.parentThreadId),
+      parentThreadId === (history?.parentThreadId ?? candidate.parentState.parentThreadId)
     );
   }
 
@@ -523,25 +525,6 @@ function readNativeTurnState(
   return normalizeIdentifier(readString(turn, "status")) === "inprogress"
     ? "active"
     : readNativeTurnEnd(turn);
-}
-
-export function readNativeTaskAssignment(
-  task: AgentHarnessTaskRecord,
-): (NativeSubagentAssignment & { initialTurnId?: string }) | undefined {
-  const runId = task.runId;
-  const identity = readCodexNativeSubagentRunId(runId);
-  if (!runId || !identity) {
-    return undefined;
-  }
-  const storedTurnId = isJsonObject(task.detail)
-    ? normalizeOptionalString(readString(task.detail, "nativeTurnId"))
-    : undefined;
-  return {
-    runId,
-    childThreadId: identity.threadId,
-    nativeTurnId: storedTurnId ?? identity.turnId,
-    initialTurnId: identity.turnId,
-  };
 }
 
 export function readTurnErrorMessage(turn: JsonObject): string | undefined {

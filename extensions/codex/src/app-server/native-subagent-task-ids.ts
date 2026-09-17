@@ -2,6 +2,19 @@
  * Shared identifiers for representing Codex native subagents as OpenClaw task
  * runtime rows.
  */
+import type { AgentHarnessTaskRecord } from "openclaw/plugin-sdk/agent-harness-task-runtime";
+import {
+  normalizeOptionalString,
+  readStringField as readString,
+} from "openclaw/plugin-sdk/string-coerce-runtime";
+import { isJsonObject } from "./protocol.js";
+
+export type NativeSubagentAssignment = {
+  runId: string;
+  childThreadId: string;
+  nativeTurnId: string | undefined;
+};
+
 /** Task runtime namespace for Codex native subagent task rows. */
 export const CODEX_NATIVE_SUBAGENT_RUNTIME = "subagent";
 /** Task kind used to distinguish native Codex subagents from other subagent runtimes. */
@@ -24,4 +37,23 @@ export function readCodexNativeSubagentRunId(
     .slice(CODEX_NATIVE_SUBAGENT_RUN_ID_PREFIX.length)
     .split(":turn:");
   return threadId?.trim() ? { threadId, ...(turnId ? { turnId } : {}) } : undefined;
+}
+
+export function readNativeTaskAssignment(
+  task: AgentHarnessTaskRecord,
+): (NativeSubagentAssignment & { initialTurnId?: string }) | undefined {
+  const runId = task.runId;
+  const identity = readCodexNativeSubagentRunId(runId);
+  if (!runId || !identity) {
+    return undefined;
+  }
+  const storedTurnId = isJsonObject(task.detail)
+    ? normalizeOptionalString(readString(task.detail, "nativeTurnId"))
+    : undefined;
+  return {
+    runId,
+    childThreadId: identity.threadId,
+    nativeTurnId: storedTurnId ?? identity.turnId,
+    initialTurnId: identity.turnId,
+  };
 }

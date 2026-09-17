@@ -237,10 +237,10 @@ describe("agent-harness-task-runtime", () => {
         vi.mocked(isInternalAnnounceRequesterSession).mockReturnValueOnce(false);
         vi.mocked(resolveAnnounceOrigin).mockReturnValueOnce(requesterOrigin);
         vi.mocked(resolveSubagentCompletionOrigin).mockImplementationOnce(
-          async ({ requesterOrigin }) => {
+          async ({ requesterOrigin: resolvedOrigin }) => {
             originEntered.resolve();
             await releaseOrigin.promise;
-            return requesterOrigin;
+            return resolvedOrigin;
           },
         );
       }

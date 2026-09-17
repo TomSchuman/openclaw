@@ -25,7 +25,6 @@ import {
   CodexNativeSubagentHistoryRecovery,
   isNoFinalCompletion,
   normalizeIdentifier,
-  readNativeTaskAssignment,
   readNativeTurnEnd,
   readThreadParentThreadId,
   readThreadSpawnSource,
@@ -42,7 +41,6 @@ import type {
   KnownChild,
   MonitorOptions,
   NativeChildAdmissionEvidence,
-  NativeSubagentAssignment,
   NativeSubagentMonitorClient,
   NativeSubagentMonitorRuntime,
   NativeTurnObservation,
@@ -66,6 +64,8 @@ import {
   CODEX_NATIVE_SUBAGENT_TASK_KIND,
   codexNativeSubagentRunId,
   readCodexNativeSubagentRunId,
+  readNativeTaskAssignment,
+  type NativeSubagentAssignment,
 } from "./native-subagent-task-ids.js";
 import { CodexNativeSubagentTaskMirror } from "./native-subagent-task-mirror.js";
 import { CodexNativeSubagentTurnObservation } from "./native-subagent-turn-observation.js";

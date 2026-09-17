@@ -1,7 +1,12 @@
 import { createHash } from "node:crypto";
 import { asOptionalRecord } from "openclaw/plugin-sdk/string-coerce-runtime";
 import { z } from "zod";
-import type { CodexAppServerThreadBinding } from "./session-binding.js";
+
+type NativeSubagentHistoryConnectionBinding = {
+  appServerRuntimeFingerprint?: string;
+  connectionScope?: "supervision";
+  authProfileId?: string;
+};
 
 const nonBlankString = z.string().refine((value) => Boolean(value.trim()));
 export const codexNativeSubagentHistoryOwnerSchema = z.object({
@@ -25,7 +30,7 @@ export function matchesCodexNativeSubagentHistoryOwner(
 }
 
 export function codexNativeSubagentHistoryConnectionFingerprint(
-  binding: CodexAppServerThreadBinding,
+  binding: NativeSubagentHistoryConnectionBinding,
 ): string | undefined {
   if (!binding.appServerRuntimeFingerprint) {
     return undefined;
@@ -45,7 +50,7 @@ export function createCodexNativeSubagentHistoryOwner(params: {
   parentThreadId: string;
   sessionId: string;
   lifecycleRevision?: string;
-  binding: CodexAppServerThreadBinding;
+  binding: NativeSubagentHistoryConnectionBinding;
 }): CodexNativeSubagentHistoryOwner | undefined {
   const connectionFingerprint = codexNativeSubagentHistoryConnectionFingerprint(params.binding);
   return connectionFingerprint

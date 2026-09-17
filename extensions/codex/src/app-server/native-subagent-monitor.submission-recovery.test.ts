@@ -21,11 +21,11 @@ import {
   registerCodexNativeSubagentMonitor,
   threadRead,
 } from "./native-subagent-monitor.test-support.js";
-import {
-  matchesCodexNativeSubagentSubmissionBinding,
-  type CodexNativeSubagentSubmission,
-  type CodexNativeSubagentSubmissionStore,
+import type {
+  CodexNativeSubagentSubmission,
+  CodexNativeSubagentSubmissionStore,
 } from "./native-subagent-submission.js";
+import { matchesCodexNativeSubagentSubmissionBinding } from "./session-binding-record.js";
 import {
   CODEX_APP_SERVER_BINDING_MAX_ENTRIES,
   CODEX_APP_SERVER_BINDING_NAMESPACE,

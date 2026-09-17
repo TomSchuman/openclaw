@@ -20,14 +20,14 @@ import type { CodexManagedThreadStore } from "./managed-thread-store.js";
 import type { CodexNativeSubagentHistoryOwner } from "./native-subagent-history-owner.js";
 import {
   adoptCodexNativeSubagentSubmissions,
-  matchesCodexNativeSubagentSubmissionBinding,
   mutateCodexNativeSubagentSubmissions,
-  preserveCodexNativeSubagentSubmissions,
   type CodexNativeSubagentSubmission,
 } from "./native-subagent-submission.js";
 import {
   bindingStoreKey,
+  matchesCodexNativeSubagentSubmissionBinding,
   ownsStoredSessionGeneration,
+  preserveCodexNativeSubagentSubmissions,
   readCodexAppServerThreadBinding,
   readCodexBindingTimestamp,
   readCurrentCodexAppServerBinding,

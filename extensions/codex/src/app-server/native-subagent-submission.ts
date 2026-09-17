@@ -1,12 +1,10 @@
 import { isDeepStrictEqual } from "node:util";
 import { z } from "zod";
 import {
-  codexNativeSubagentHistoryConnectionFingerprint,
   codexNativeSubagentHistoryOwnerSchema,
   matchesCodexNativeSubagentHistoryOwner,
   type CodexNativeSubagentHistoryOwner,
 } from "./native-subagent-history-owner.js";
-import type { CodexAppServerThreadBinding } from "./session-binding-record.js";
 
 const identifier = z.string().refine((value) => Boolean(value.trim()));
 const submissionSchema = z
@@ -49,17 +47,6 @@ export function matchesCodexNativeSubagentSubmissionOwner(
   return (
     stored.parentThreadId === current.parentThreadId &&
     matchesCodexNativeSubagentHistoryOwner(stored, current)
-  );
-}
-
-export function matchesCodexNativeSubagentSubmissionBinding(
-  binding: CodexAppServerThreadBinding,
-  owner: CodexNativeSubagentHistoryOwner,
-): boolean {
-  return (
-    binding.threadId === owner.parentThreadId &&
-    !binding.pendingSupervisionBranch &&
-    codexNativeSubagentHistoryConnectionFingerprint(binding) === owner.connectionFingerprint
   );
 }
 
@@ -115,20 +102,6 @@ export function mutateCodexNativeSubagentSubmissions(params: {
       receipts: existing ? receipts : [...receipts, receipt],
     },
   };
-}
-
-/** Unknown metadata stays opaque through ordinary binding writes. */
-export function preserveCodexNativeSubagentSubmissions(
-  currentBinding: CodexAppServerThreadBinding,
-  nextBinding: CodexAppServerThreadBinding,
-  value: unknown,
-): unknown {
-  return currentBinding.threadId === nextBinding.threadId &&
-    codexNativeSubagentHistoryConnectionFingerprint(currentBinding) ===
-      codexNativeSubagentHistoryConnectionFingerprint(nextBinding) &&
-    isDeepStrictEqual(currentBinding.pendingSupervisionBranch, nextBinding.pendingSupervisionBranch)
-    ? value
-    : undefined;
 }
 
 /** Physical adoption cannot establish continuity for an unstamped receipt. */

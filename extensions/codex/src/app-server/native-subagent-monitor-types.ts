@@ -12,6 +12,7 @@ import type {
   CodexNativeSubagentSubmission,
   CodexNativeSubagentSubmissionStore,
 } from "./native-subagent-submission.js";
+import type { NativeSubagentAssignment } from "./native-subagent-task-ids.js";
 import type { CodexNativeSubagentTaskMirror } from "./native-subagent-task-mirror.js";
 
 export type NativeSubagentMonitorRuntime = {
@@ -77,12 +78,6 @@ export type NativeTurnObservation = {
   turnId: string;
   state: NativeTurnState | undefined;
   startObserved?: true;
-};
-
-export type NativeSubagentAssignment = {
-  runId: string;
-  childThreadId: string;
-  nativeTurnId: string | undefined;
 };
 
 export type ChildState = NativeSubagentAssignment & {

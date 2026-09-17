@@ -18,10 +18,8 @@ import {
   registerCodexNativeSubagentMonitor,
   threadRead,
 } from "./native-subagent-monitor.test-support.js";
-import {
-  matchesCodexNativeSubagentSubmissionBinding,
-  type CodexNativeSubagentSubmissionStore,
-} from "./native-subagent-submission.js";
+import type { CodexNativeSubagentSubmissionStore } from "./native-subagent-submission.js";
+import { matchesCodexNativeSubagentSubmissionBinding } from "./session-binding-record.js";
 import { createCodexTestBindingStore } from "./session-binding.test-helpers.js";
 
 afterEach(() => vi.useRealTimers());

@@ -22,17 +22,17 @@ import {
 } from "./native-hook-relay.js";
 import { createCodexNativeSubagentHistoryOwner } from "./native-subagent-history-owner.js";
 import { codexNativeSubagentMonitorRuntime } from "./native-subagent-monitor.js";
-import {
-  matchesCodexNativeSubagentSubmissionBinding,
-  type CodexNativeSubagentSubmissionStore,
-} from "./native-subagent-submission.js";
+import type { CodexNativeSubagentSubmissionStore } from "./native-subagent-submission.js";
 import type { CodexSandboxPolicy, CodexTurnEnvironmentParams } from "./protocol.js";
 import type { CodexAttemptPrompt } from "./run-attempt-prompt.js";
 import {
   releaseCodexSandboxExecServerEnvironment,
   type CodexSandboxExecEnvironment,
 } from "./sandbox-exec-server.js";
-import type { CodexAppServerThreadBinding } from "./session-binding.js";
+import {
+  matchesCodexNativeSubagentSubmissionBinding,
+  type CodexAppServerThreadBinding,
+} from "./session-binding-record.js";
 import {
   clearSharedCodexAppServerClientIfCurrentAndUnclaimed,
   createIsolatedCodexAppServerClient,

@@ -2863,7 +2863,7 @@ describe("CodexNativeSubagentMonitor", () => {
     client.close();
   });
 
-  it("retains a queued legacy child's follow-up while another child is restoring", async () => {
+  it("retains a queued child's follow-up until its history is restored", async () => {
     const client = createClient();
     const historyOwner = nativeHistoryOwner();
     const first = {
@@ -2888,14 +2888,15 @@ describe("CodexNativeSubagentMonitor", () => {
       releaseRead = resolve;
     });
     client.setThreadReadFactory("slow-child", () => readGate);
-    client.setThreadRead(
-      "child-thread",
-      threadRead({
-        previousResult: "first result",
-        status: "inProgress",
-        threadStatus: "active",
-      }),
-    );
+    const childHistory = threadRead({
+      previousResult: "first result",
+      status: "inProgress",
+      threadStatus: "active",
+    });
+    client.setThreadReadFactory("child-thread", async () => {
+      await readGate;
+      return childHistory;
+    });
     const claimDirectChild = vi.fn(() => () => undefined);
     const monitor = new CodexNativeSubagentMonitor(client as never, runtime, {
       recoveryPollDelaysMs: [10],

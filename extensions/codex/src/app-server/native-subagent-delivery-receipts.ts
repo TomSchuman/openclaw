@@ -1,9 +1,8 @@
 import type { AgentHarnessTaskRecord } from "openclaw/plugin-sdk/agent-harness-task-runtime";
 import { readStringField as readString } from "openclaw/plugin-sdk/string-coerce-runtime";
 import { readCodexNativeSubagentHistoryOwner } from "./native-subagent-history-owner.js";
-import { readNativeTaskAssignment } from "./native-subagent-history-recovery.js";
 import { codexNativeSubagentNotifications } from "./native-subagent-notification.js";
-import { codexNativeSubagentRunId } from "./native-subagent-task-ids.js";
+import { codexNativeSubagentRunId, readNativeTaskAssignment } from "./native-subagent-task-ids.js";
 import { isJsonObject, type CodexServerNotification } from "./protocol.js";
 
 type ReceiptParent = Readonly<{

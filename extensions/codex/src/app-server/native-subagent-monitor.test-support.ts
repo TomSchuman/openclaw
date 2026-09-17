@@ -253,8 +253,6 @@ export function nativeHistoryOwner(parentThreadId = "parent-thread") {
     sessionId: "physical-1",
     lifecycleRevision: "revision-1",
     binding: {
-      threadId: parentThreadId,
-      cwd: "/workspace",
       appServerRuntimeFingerprint: "connection-A",
     },
   });

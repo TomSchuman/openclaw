@@ -1,5 +1,6 @@
 /** Canonical binding codec and synchronous generation-aware reads; no lifecycle or auth loading. */
 import { createHash } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { AgentHarnessPreflightError } from "openclaw/plugin-sdk/agent-harness-registration";
 import type { EmbeddedRunAttemptParamsV2 } from "openclaw/plugin-sdk/agent-harness-runtime";
 import { resolveSessionAgentIdsStrict } from "openclaw/plugin-sdk/agent-scope-runtime";
@@ -9,9 +10,11 @@ import { asOptionalRecord } from "openclaw/plugin-sdk/string-coerce-runtime";
 import { z } from "zod";
 import { CODEX_PLUGIN_MARKETPLACE_NAME_PATTERN } from "./config-contracts.js";
 import { normalizeCodexServiceTier } from "./config-utils.js";
-import type { CodexNativeSubagentHistoryOwner } from "./native-subagent-history-owner.js";
 import {
-  matchesCodexNativeSubagentSubmissionBinding,
+  codexNativeSubagentHistoryConnectionFingerprint,
+  type CodexNativeSubagentHistoryOwner,
+} from "./native-subagent-history-owner.js";
+import {
   matchesCodexNativeSubagentSubmissionOwner,
   readCodexNativeSubagentSubmissions,
   type CodexNativeSubagentSubmission,
@@ -423,6 +426,31 @@ export function readCurrentCodexAppServerBinding(
   }
   return stored?.state === "active" && ownsStoredSessionGeneration(identity, stored)
     ? stored.binding
+    : undefined;
+}
+
+export function matchesCodexNativeSubagentSubmissionBinding(
+  binding: CodexAppServerThreadBinding,
+  owner: CodexNativeSubagentHistoryOwner,
+): boolean {
+  return (
+    binding.threadId === owner.parentThreadId &&
+    !binding.pendingSupervisionBranch &&
+    codexNativeSubagentHistoryConnectionFingerprint(binding) === owner.connectionFingerprint
+  );
+}
+
+/** Unknown metadata stays opaque through ordinary binding writes. */
+export function preserveCodexNativeSubagentSubmissions(
+  currentBinding: CodexAppServerThreadBinding,
+  nextBinding: CodexAppServerThreadBinding,
+  value: unknown,
+): unknown {
+  return currentBinding.threadId === nextBinding.threadId &&
+    codexNativeSubagentHistoryConnectionFingerprint(currentBinding) ===
+      codexNativeSubagentHistoryConnectionFingerprint(nextBinding) &&
+    isDeepStrictEqual(currentBinding.pendingSupervisionBranch, nextBinding.pendingSupervisionBranch)
+    ? value
     : undefined;
 }
 
