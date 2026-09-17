@@ -8,7 +8,10 @@ import {
   readStringField as readString,
 } from "openclaw/plugin-sdk/string-coerce-runtime";
 import type { CodexNativeSubagentHistoryOwner } from "./native-subagent-history-owner.js";
-import { codexNativeSubagentRunId } from "./native-subagent-task-ids.js";
+import {
+  codexNativeSubagentRunId,
+  readNativeSubagentThreadIds,
+} from "./native-subagent-task-ids.js";
 import type {
   CodexServerNotification,
   CodexSessionSource,
@@ -76,7 +79,11 @@ export class CodexNativeSubagentTaskMirror {
     this.expectedAuthoritativeRunIds.add(runId);
   }
 
-  startFollowupTurn(threadId: string, turnId: string): string {
+  startFollowupTurn(
+    threadId: string,
+    turnId: string,
+    nativeParentThreadId = this.params.parentThreadId,
+  ): string {
     const previousRunId = this.runId(threadId);
     const previous = this.runtime.listTaskRecords().find((task) => task.runId === previousRunId);
     const runId = codexNativeSubagentRunId(threadId, turnId);
@@ -86,6 +93,7 @@ export class CodexNativeSubagentTaskMirror {
     this.createRunningTask({
       threadId,
       turnId,
+      nativeParentThreadId,
       label: previous?.label ?? "Subagent",
       task: previous?.task ?? "Subagent follow-up",
       startedAt: this.now(),
@@ -258,7 +266,7 @@ export class CodexNativeSubagentTaskMirror {
       return;
     }
     const isSpawnAgentTool = normalizeToolName(readString(item, "tool")) === "spawnagent";
-    const receiverThreadIds = readStringArray(item.receiverThreadIds);
+    const receiverThreadIds = readNativeSubagentThreadIds(item.receiverThreadIds);
     const agentsStates = readAgentsStates(item.agentsStates);
     const spawnChildThreadIds = new Set([...receiverThreadIds, ...agentsStates.keys()]);
     if (isSpawnAgentTool) {
@@ -360,6 +368,7 @@ export class CodexNativeSubagentTaskMirror {
   private createRunningTask(params: {
     threadId: string;
     turnId?: string;
+    nativeParentThreadId?: string;
     label: string;
     task: string;
     startedAt: number;
@@ -373,7 +382,10 @@ export class CodexNativeSubagentTaskMirror {
     const runId = this.runId(threadId);
     // Creation also refreshes existing metadata. Recovery must preserve the original locator,
     // including its absence on rows created before native history ownership was recorded.
-    const historyOwner = this.params.historyOwner;
+    const historyOwner =
+      this.params.historyOwner && params.nativeParentThreadId
+        ? { ...this.params.historyOwner, parentThreadId: params.nativeParentThreadId }
+        : this.params.historyOwner;
     const existing = this.runtime.listTaskRecords().find((task) => task.runId === runId);
     const stampHistoryOwner = historyOwner && !existing;
     const detail = {
@@ -554,13 +566,6 @@ function readAgentsStates(
     states.set(threadId, { status, message });
   }
   return states;
-}
-
-function readStringArray(value: JsonValue | undefined): string[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  return value.filter((entry): entry is string => typeof entry === "string" && entry.trim() !== "");
 }
 
 function readNullableString(value: JsonObject, key: string): string | null | undefined {

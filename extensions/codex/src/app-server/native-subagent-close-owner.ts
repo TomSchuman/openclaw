@@ -10,6 +10,7 @@ import type {
   ParentState,
 } from "./native-subagent-monitor-types.js";
 import { logRecoveryFailure } from "./native-subagent-recovery-coordinator.js";
+import { readNativeSubagentThreadIds } from "./native-subagent-task-ids.js";
 import { isJsonObject, type CodexServerNotification } from "./protocol.js";
 
 type ChildCloseCall = {
@@ -97,7 +98,7 @@ export class CodexNativeSubagentCloseOwner {
       this.calls.set(state, calls);
     }
     const key = `${turnId}\0${itemId}`;
-    const childThreadIds = new Set(readStringArray(item?.receiverThreadIds));
+    const childThreadIds = new Set(readNativeSubagentThreadIds(item?.receiverThreadIds));
     if (notification.method === "item/started") {
       if (calls.has(key)) {
         return;
@@ -163,7 +164,7 @@ export class CodexNativeSubagentCloseOwner {
     state: ParentState,
     childState: ChildState,
     summary: string,
-    releaseSubscription: () => void,
+    releaseSubscription?: () => void,
   ): void {
     if (childState.pendingCompletion && !this.callbacks.isParentRetired(state)) {
       // Closing the native child does not discard its already accepted result.
@@ -171,7 +172,7 @@ export class CodexNativeSubagentCloseOwner {
       childState.subscriptionClosed = true;
       this.callbacks.releaseDirectChild(childState);
       this.callbacks.clearRecoveryTimers(childState);
-      releaseSubscription();
+      releaseSubscription?.();
       this.callbacks.releaseClientRetentionIfIdle();
       return;
     }
@@ -204,7 +205,20 @@ export class CodexNativeSubagentCloseOwner {
       });
     }
     this.callbacks.unregisterChild(childState);
-    releaseSubscription();
+    releaseSubscription?.();
+  }
+
+  retireReceiver(receiver: KnownChild, releaseSubscription: () => void): void {
+    const threadId = receiver.assignment.childThreadId;
+    if (
+      this.callbacks.isParentRetired(receiver.parent) &&
+      this.callbacks.knownChild(threadId) === receiver &&
+      !this.callbacks.currentChild(threadId)
+    ) {
+      // Parent pruning has settled accepted writes and removed task owners.
+      // The captured receiver must still own the subscription being released.
+      releaseSubscription();
+    }
   }
 
   private completeChildClose(state: ParentState, key: string, call: ChildCloseCall): Promise<void> {
@@ -323,13 +337,6 @@ export class CodexNativeSubagentCloseOwner {
       this.callbacks.pruneParent(state);
     }
   }
-}
-
-function readStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-  return value.filter((entry): entry is string => typeof entry === "string" && entry.trim() !== "");
 }
 
 export function isCodexNativeSubagentCloseNotification(

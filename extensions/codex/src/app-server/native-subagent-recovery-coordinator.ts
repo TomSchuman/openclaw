@@ -1,6 +1,7 @@
 import { embeddedAgentLog, formatErrorMessage } from "openclaw/plugin-sdk/agent-harness-runtime";
 import type {
   ChildState,
+  NativeTurnEnd,
   NativeTurnObservation,
   ParentState,
   TaskRecoveryCandidate,
@@ -53,6 +54,36 @@ export class CodexNativeSubagentRecoveryCoordinator {
     return [...this.taskReconciliations.values(), ...this.taskReconciliationTimers.values()].map(
       ({ candidate }) => candidate,
     );
+  }
+
+  observeUnregisteredTurn(
+    threadId: string,
+    turnId: string,
+    started: boolean,
+    end: NativeTurnEnd | undefined,
+  ): TaskRecoveryCandidate[] {
+    const candidates = [...new Set(this.allCandidates())].filter(
+      (candidate) =>
+        candidate.childThreadId === threadId &&
+        !this.dependencies.isRetiredParent(candidate.parentState),
+    );
+    for (const turns of new Set(candidates.map((candidate) => candidate.observedTurns))) {
+      const observed = turns.find((entry) => entry.turnId === turnId);
+      if (!started) {
+        if (observed) {
+          observed.state = end;
+        } else {
+          turns.push({ turnId, state: end });
+        }
+      } else if (!observed) {
+        const previous = turns.at(-1);
+        if (previous?.state === "active") {
+          previous.state = undefined;
+        }
+        turns.push({ turnId, state: "active", startObserved: true });
+      }
+    }
+    return candidates;
   }
 
   hasRevision(threadId: string): boolean {

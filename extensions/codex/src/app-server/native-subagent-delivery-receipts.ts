@@ -1,3 +1,4 @@
+import { embeddedAgentLog } from "openclaw/plugin-sdk/agent-harness-runtime";
 import type { AgentHarnessTaskRecord } from "openclaw/plugin-sdk/agent-harness-task-runtime";
 import { readStringField as readString } from "openclaw/plugin-sdk/string-coerce-runtime";
 import { readCodexNativeSubagentHistoryOwner } from "./native-subagent-history-owner.js";
@@ -12,15 +13,76 @@ type ReceiptParent = Readonly<{
 }>;
 type KnownReceiptChild<Parent extends ReceiptParent> = Readonly<{
   parent: Parent;
+  nativeParentThreadId: string;
   deliveryReceipts: CodexNativeSubagentDeliveryReceipts;
-  agentPaths: Iterable<string>;
+  agentPaths: Set<string>;
   pendingTurns: readonly Readonly<{ turnId: string }>[];
 }>;
 type ReceiptRecoveryCandidate<Parent extends ReceiptParent> = Readonly<{
+  childThreadId: string;
   parentState: Parent;
   requesterSessionKey: string;
   deliveryReceipts: CodexNativeSubagentDeliveryReceipts;
 }>;
+
+export function buildCodexNativeSubagentAgentPathKey(
+  parentThreadId: string,
+  agentPath: string,
+): string {
+  return `${parentThreadId}\0${agentPath}`;
+}
+
+export function resolveCodexNativeSubagentReceiptOwner<Parent extends ReceiptParent>(params: {
+  state: Parent;
+  childThreadId: string;
+  known: KnownReceiptChild<Parent> | undefined;
+  candidates: Iterable<ReceiptRecoveryCandidate<Parent>>;
+  isRetiredParent: (state: Parent) => boolean;
+}): CodexNativeSubagentDeliveryReceipts {
+  const { state, childThreadId, known, candidates, isRetiredParent } = params;
+  if (known?.parent === state) {
+    return known.deliveryReceipts;
+  }
+  // A history read may retain the receipt owner beyond foreground registration.
+  for (const candidate of candidates) {
+    if (
+      candidate.childThreadId === childThreadId &&
+      candidate.parentState.parentThreadId === state.parentThreadId &&
+      candidate.requesterSessionKey === state.requesterSessionKey &&
+      !isRetiredParent(candidate.parentState)
+    ) {
+      return candidate.deliveryReceipts;
+    }
+  }
+  return state.deliveryReceipts;
+}
+
+export function registerCodexNativeSubagentReceiptAlias<Parent extends ReceiptParent>(params: {
+  state: Parent;
+  childThreadId: string;
+  agentPath: string;
+  known: KnownReceiptChild<Parent> | undefined;
+  aliases: Map<string, string>;
+}): string[] {
+  const { state, childThreadId, agentPath, known, aliases } = params;
+  if (known?.parent !== state) {
+    return [];
+  }
+  const key = buildCodexNativeSubagentAgentPathKey(state.parentThreadId, agentPath);
+  const existingChild = aliases.get(key);
+  if (existingChild && existingChild !== childThreadId) {
+    embeddedAgentLog.warn("Ignoring conflicting Codex native subagent agent path", {
+      parentThreadId: state.parentThreadId,
+      agentPath,
+      existingChildThreadId: existingChild,
+      attemptedChildThreadId: childThreadId,
+    });
+    return [];
+  }
+  aliases.set(key, childThreadId);
+  known.agentPaths.add(agentPath);
+  return known.deliveryReceipts.addAlias(childThreadId, agentPath);
+}
 
 type Receipt = { id: string; agentPath: string; result?: string };
 type Outcome = {
@@ -211,7 +273,9 @@ export function restoreCodexNativeSubagentTaskReceipts<Parent extends ReceiptPar
     const history = readCodexNativeSubagentHistoryOwner(task.detail);
     if (
       (known && known.parent !== state) ||
-      (history ? history.parentThreadId !== state.parentThreadId : known?.parent !== state)
+      (history
+        ? history.parentThreadId !== (known?.nativeParentThreadId ?? state.parentThreadId)
+        : known?.parent !== state)
     ) {
       continue;
     }

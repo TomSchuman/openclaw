@@ -84,7 +84,7 @@ export class CodexNativeSubagentCompletionDelivery {
           this.claim(state, childState),
         childSessionKey: childState.runId,
         childSessionId: completion.childThreadId,
-        announceId: `codex-native:${state.parentThreadId}:${readCodexNativeSubagentRunId(childState.runId)?.turnId ? childState.runId : completion.childThreadId}:${completion.status}`,
+        announceId: `codex-native:${childState.nativeParentThreadId}:${readCodexNativeSubagentRunId(childState.runId)?.turnId ? childState.runId : completion.childThreadId}:${completion.status}`,
         announceType: "Subagent",
         taskLabel: "Subagent",
         status: completion.status,
@@ -165,6 +165,58 @@ export class CodexNativeSubagentCompletionDelivery {
       child.completionDeliveryTimer = undefined;
     }
     void this.deliverPending(state, child);
+  }
+
+  applyReceipts(
+    state: ParentState,
+    runIds: readonly string[],
+    children: ReadonlyMap<string, ChildState>,
+  ): void {
+    for (const runId of runIds) {
+      const child = children.get(runId);
+      const deliveryParent = child && this.dependencies.getParent(child.parentThreadId);
+      if (
+        !child ||
+        !deliveryParent ||
+        !this.dependencies.isCurrentChild(child) ||
+        !this.dependencies.isCurrentParent(state) ||
+        this.dependencies.isRetiredParent(state) ||
+        !this.dependencies.isCurrentParent(deliveryParent) ||
+        this.dependencies.isRetiredParent(deliveryParent)
+      ) {
+        continue;
+      }
+      if (deliveryParent !== state) {
+        if (
+          !state.requesterSessionKey?.trim() ||
+          state.requesterSessionKey !== deliveryParent.requesterSessionKey
+        ) {
+          continue;
+        }
+        const task = deliveryParent.taskRuntime
+          ?.listTaskRecords()
+          .find((record) => record.runId === runId);
+        try {
+          // A rotated observer can receive an earlier assignment's result, but
+          // its saved physical requester must match the observer and delivery owner.
+          assertHistoryOwnerMatchesRegistration(
+            readCodexNativeSubagentHistoryOwner(task?.detail),
+            state.historyOwner,
+            child.nativeParentThreadId,
+            true,
+          );
+        } catch {
+          continue;
+        }
+        if (!this.claim(deliveryParent, child)) {
+          continue;
+        }
+      }
+      child.nativeCompletionDelivered = true;
+      if (child.pendingCompletion && !child.deliveringCompletion) {
+        this.finish(deliveryParent, child);
+      }
+    }
   }
 
   deliverDetached(state: ParentState, children: Iterable<ChildState>): void {
@@ -339,7 +391,7 @@ export class CodexNativeSubagentCompletionDelivery {
       assertHistoryOwnerMatchesRegistration(
         readCodexNativeSubagentHistoryOwner(task?.detail),
         state.historyOwner,
-        state.parentThreadId,
+        childState.nativeParentThreadId,
         childState.requiresHistoryOwner === true,
       );
     } catch (error) {

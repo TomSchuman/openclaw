@@ -83,6 +83,7 @@ export type NativeTurnObservation = {
 export type ChildState = NativeSubagentAssignment & {
   deliveryReceipts: CodexNativeSubagentDeliveryReceipts;
   parentThreadId: string;
+  nativeParentThreadId: string;
   readonly agentId?: string;
   nativeTurnState?: NativeTurnState;
   activityWait?: { itemId: string; wait: NativeExecutionWait };
@@ -111,6 +112,7 @@ export type ChildState = NativeSubagentAssignment & {
 
 export type KnownChild = {
   parent: ParentState;
+  nativeParentThreadId: string;
   deliveryReceipts: CodexNativeSubagentDeliveryReceipts;
   assignment: NativeSubagentAssignment & { terminal: boolean; unanchored?: true };
   turnId?: string;

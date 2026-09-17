@@ -53,13 +53,15 @@ export class CodexNativeSubagentHistoryRecovery {
     private readonly queries: NativeSubagentHistoryQueries,
   ) {}
 
-  retainRecoveryParent(recovered: ParentState, source: ParentState): void {
-    if (recovered === source) {
-      return;
+  retainRecoveryParents(recovered: Iterable<ParentState | undefined>, source: ParentState): void {
+    for (const parent of recovered) {
+      if (!parent || parent === source) {
+        continue;
+      }
+      const sources = this.recoveredParentSources.get(parent) ?? new Set<ParentState>();
+      sources.add(source);
+      this.recoveredParentSources.set(parent, sources);
     }
-    const sources = this.recoveredParentSources.get(recovered) ?? new Set<ParentState>();
-    sources.add(source);
-    this.recoveredParentSources.set(recovered, sources);
   }
 
   forgetRecoveredParent(state: ParentState): void {
@@ -103,8 +105,8 @@ export class CodexNativeSubagentHistoryRecovery {
     return [...retiring].filter((state) => parents.get(state.parentThreadId) === state);
   }
 
-  selectTaskRecords(state: ParentState) {
-    return (state.taskRuntime?.listTaskRecords() ?? [])
+  selectTaskRecords(state: ParentState, records = state.taskRuntime?.listTaskRecords() ?? []) {
+    return records
       .filter((task) => this.acceptsTask(task, state))
       .toSorted((a, b) => (b.startedAt ?? b.createdAt) - (a.startedAt ?? a.createdAt));
   }
@@ -132,6 +134,100 @@ export class CodexNativeSubagentHistoryRecovery {
       },
       state,
     );
+  }
+
+  canRestoreTask(task: AgentHarnessTaskRecord, state: ParentState): boolean {
+    const history = readCodexNativeSubagentHistoryOwner(task.detail);
+    try {
+      assertHistoryOwnerMatchesRegistration(
+        history,
+        state.historyOwner,
+        history?.parentThreadId ?? state.parentThreadId,
+        true,
+      );
+      return this.acceptsTask(task, state);
+    } catch {
+      return false;
+    }
+  }
+
+  readReceiverTask(state: ParentState, childThreadId: string) {
+    const records = state.taskRuntime?.listTaskRecords() ?? [];
+    const task = records
+      .toSorted((a, b) => (b.startedAt ?? b.createdAt) - (a.startedAt ?? a.createdAt))
+      .find((record) => readNativeTaskAssignment(record)?.childThreadId === childThreadId);
+    const assignment = task && readNativeTaskAssignment(task);
+    const history = task && readCodexNativeSubagentHistoryOwner(task.detail);
+    if (!task) {
+      return undefined;
+    }
+    if (
+      !assignment ||
+      !history ||
+      !["succeeded", "failed", "cancelled"].includes(task.status) ||
+      !this.canRestoreTask(task, state)
+    ) {
+      return { restorable: false as const };
+    }
+    return {
+      restorable: true as const,
+      assignment,
+      nativeParentThreadId: history.parentThreadId,
+      records: this.selectTaskRecords(state, records),
+    };
+  }
+
+  readChildAssignments(
+    state: ParentState,
+    assignment: NativeSubagentAssignment,
+    tasks: readonly AgentHarnessTaskRecord[],
+  ) {
+    let current: NativeSubagentAssignment & { initialTurnId?: string } = assignment;
+    let latestAt = -Infinity;
+    let terminal = false;
+    let nativeParentThreadId = state.parentThreadId;
+    const storedTurnIds = new Set<string>();
+    const completedRunIds: string[] = [];
+    for (const task of tasks) {
+      const candidate = readNativeTaskAssignment(task);
+      if (!this.acceptsTask(task, state) || candidate?.childThreadId !== assignment.childThreadId) {
+        continue;
+      }
+      const history = readCodexNativeSubagentHistoryOwner(task.detail);
+      if (history && !this.canRestoreTask(task, state)) {
+        continue;
+      }
+      const taskTerminal =
+        task.status === "succeeded" || task.status === "failed" || task.status === "cancelled";
+      if (taskTerminal) {
+        completedRunIds.push(candidate.runId);
+      }
+      for (const turnId of [candidate.nativeTurnId, candidate.initialTurnId]) {
+        if (turnId) {
+          storedTurnIds.add(turnId);
+        }
+      }
+      const startedAt = task.startedAt ?? task.createdAt;
+      if (startedAt > latestAt) {
+        current = {
+          ...candidate,
+          nativeTurnId:
+            candidate.nativeTurnId ??
+            (candidate.runId === assignment.runId ? assignment.nativeTurnId : undefined),
+        };
+        terminal = taskTerminal;
+        nativeParentThreadId = history?.parentThreadId ?? state.parentThreadId;
+        latestAt = startedAt;
+      }
+    }
+    return {
+      current,
+      found: latestAt !== -Infinity,
+      terminal,
+      nativeParentThreadId,
+      storedTurnIds,
+      completedRunIds,
+    };
   }
 
   shouldReconcileTask(task: AgentHarnessTaskRecord, now: number): boolean {

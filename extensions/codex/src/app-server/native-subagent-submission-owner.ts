@@ -47,6 +47,7 @@ type SubmissionDependencies = {
   recovery: CodexNativeSubagentRecoveryCoordinator;
   knownChildren: ReadonlyMap<string, KnownChild>;
   currentChild: (threadId: string) => ChildState | undefined;
+  prepareReceiver: (state: ParentState, threadId: string) => boolean;
   restoreKnownChild: (
     state: ParentState,
     assignment: NativeSubagentAssignment,
@@ -91,6 +92,11 @@ export class CodexNativeSubagentSubmissionOwner {
     this.retire(state);
     this.dependencies.onSettled(state);
     return false;
+  }
+
+  private nativeParentThreadId(state: ParentState, childThreadId: string): string {
+    const known = this.dependencies.knownChildren.get(childThreadId);
+    return known?.parent === state ? known.nativeParentThreadId : state.parentThreadId;
   }
 
   private isObserving(state: ParentState, custody: SubmissionCustody): boolean {
@@ -150,6 +156,7 @@ export class CodexNativeSubagentSubmissionOwner {
         if (typeof id !== "string") {
           return [];
         }
+        this.dependencies.prepareReceiver(state, id);
         const predecessor = captureSubmissionPredecessor({
           state,
           known: this.dependencies.knownChildren.get(id),
@@ -232,6 +239,19 @@ export class CodexNativeSubagentSubmissionOwner {
       Boolean(this.pending.get(state)?.size || this.writes.get(state)?.size) ||
       [...(this.calls.get(state)?.values() ?? [])].some((call) =>
         hasSubmissionCallCustody(state, call, this.dependencies.hasObservationBacking),
+      )
+    );
+  }
+
+  hasChildCustody(state: ParentState, childThreadId: string): boolean {
+    return (
+      [...(this.pending.get(state)?.values() ?? [])].some(
+        (entry) => entry.receipt.childThreadId === childThreadId,
+      ) ||
+      [...(this.calls.get(state)?.values() ?? [])].some(
+        (call) =>
+          call.targets.some((target) => target.childThreadId === childThreadId) &&
+          hasSubmissionCallCustody(state, call, this.dependencies.hasObservationBacking),
       )
     );
   }
@@ -496,7 +516,7 @@ export class CodexNativeSubagentSubmissionOwner {
       const thread = isJsonObject(response.thread) ? response.thread : undefined;
       if (
         readString(thread, "id") !== receipt.childThreadId ||
-        readThreadParentThreadId(thread) !== state.parentThreadId
+        readThreadParentThreadId(thread) !== this.nativeParentThreadId(state, receipt.childThreadId)
       ) {
         return undefined;
       }
@@ -567,7 +587,8 @@ export class CodexNativeSubagentSubmissionOwner {
       const history = readCodexNativeSubagentHistoryOwner(existing.detail);
       if (
         assignment?.nativeTurnId !== receipt.submissionId ||
-        (history && history.parentThreadId !== state.parentThreadId)
+        (history &&
+          history.parentThreadId !== this.nativeParentThreadId(state, receipt.childThreadId))
       ) {
         return false;
       }
