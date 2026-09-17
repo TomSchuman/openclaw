@@ -10,10 +10,10 @@ const nativeAnchor =
   "490560464711e17caa7fcf9535bb58d2bb5c1277c3ab8f11847df41d6a36fd47ea2847e57b6ace3321993a63750db330e19cc6e66598a02f353bb66a1c565c3f";
 
 export function createPnpmArchiveFixture(
-  makeTempDir: (prefix: string) => string,
+  tempDirs: { make(prefix: string): string },
   options: { platform?: string; arch?: string; glibc?: boolean } = {},
 ) {
-  const root = makeTempDir("pnpm-verified-download-");
+  const root = tempDirs.make("pnpm-verified-download-");
   const image = path.join(root, "image");
   const registry = path.join(root, "registry");
   const runner = path.join(root, "runner");

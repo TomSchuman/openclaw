@@ -7441,7 +7441,7 @@ NODE
   });
 
   it("bootstraps from store, image, then registry while authenticating each archive", () => {
-    const f = createPnpmArchiveFixture(tempDirs.make);
+    const f = createPnpmArchiveFixture(tempDirs);
     const archives = readdirSync(f.registry);
     for (const name of archives) {
       copyFileSync(join(f.registry, name), join(f.image, name));

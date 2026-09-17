@@ -13,7 +13,7 @@ describe("pinned pnpm cold bootstrap", () => {
   it.each([{ platform: "darwin" }, { arch: "riscv64" }, { glibc: false }])(
     "leaves unsupported native selection with its owner: %j",
     (options) => {
-      const f = createPnpmArchiveFixture(tempDirs.make, options);
+      const f = createPnpmArchiveFixture(tempDirs, options);
       const result = f.run();
       expect(result.status, result.stderr).toBe(0);
       expect(result.stdout).toBe("");
@@ -22,7 +22,7 @@ describe("pinned pnpm cold bootstrap", () => {
   );
 
   it("stops on a download error without retrying or publishing cache state", () => {
-    const f = createPnpmArchiveFixture(tempDirs.make);
+    const f = createPnpmArchiveFixture(tempDirs);
     const result = f.run({ CURL_FIXTURE_EXIT: "22" });
     expect(result.status).not.toBe(0);
     expect(result.stderr).toContain("Cannot download pinned pnpm archive");
@@ -32,7 +32,7 @@ describe("pinned pnpm cold bootstrap", () => {
   });
 
   it("downloads authenticated registry archives when both the store and image are empty", () => {
-    const f = createPnpmArchiveFixture(tempDirs.make);
+    const f = createPnpmArchiveFixture(tempDirs);
     const result = f.run();
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout.trim()).not.toBe("");
@@ -51,7 +51,7 @@ describe("pinned pnpm cold bootstrap", () => {
   });
 
   it("uses authenticated image bytes without making a network request", () => {
-    const f = createPnpmArchiveFixture(tempDirs.make);
+    const f = createPnpmArchiveFixture(tempDirs);
     for (const name of fs.readdirSync(f.registry)) {
       fs.copyFileSync(path.join(f.registry, name), path.join(f.image, name));
     }
@@ -62,7 +62,7 @@ describe("pinned pnpm cold bootstrap", () => {
   });
 
   it("bootstraps from the warmed store while archive downloads are unavailable", () => {
-    const f = createPnpmArchiveFixture(tempDirs.make);
+    const f = createPnpmArchiveFixture(tempDirs);
     const cold = f.run();
     expect(cold.status, cold.stderr).toBe(0);
     fs.unlinkSync(f.calls);
@@ -82,7 +82,7 @@ describe("pinned pnpm cold bootstrap", () => {
     { name: "pnpm-12.4.0.tgz", fallback: "image" },
     { name: "exe.linux-x64-12.4.0.tgz", fallback: "image" },
   ])("repairs unauthenticated cached $name through the $fallback", ({ name, fallback }) => {
-    const f = createPnpmArchiveFixture(tempDirs.make);
+    const f = createPnpmArchiveFixture(tempDirs);
     const cold = f.run();
     expect(cold.status, cold.stderr).toBe(0);
     fs.unlinkSync(f.calls);
@@ -104,7 +104,7 @@ describe("pinned pnpm cold bootstrap", () => {
   it.each(["pnpm-12.4.0.tgz", "exe.linux-x64-12.4.0.tgz"])(
     "rejects substituted downloaded %s and removes incomplete state",
     (name) => {
-      const f = createPnpmArchiveFixture(tempDirs.make);
+      const f = createPnpmArchiveFixture(tempDirs);
       fs.writeFileSync(path.join(f.registry, name), "substituted bytes");
       const result = f.run();
       expect(result.status).not.toBe(0);
@@ -119,7 +119,7 @@ describe("pinned pnpm cold bootstrap", () => {
     { COREPACK_NPM_REGISTRY: "https://registry.example.test" },
     { COREPACK_INTEGRITY_KEYS: '{"npm":[]}' },
   ])("retains ordinary owner policy when cold network seeding is unavailable: %j", (env) => {
-    const f = createPnpmArchiveFixture(tempDirs.make);
+    const f = createPnpmArchiveFixture(tempDirs);
     const result = f.run(env);
     expect(result.status, result.stderr).toBe(0);
     expect(result.stdout).toBe("");
@@ -128,7 +128,7 @@ describe("pinned pnpm cold bootstrap", () => {
   });
 
   it("does not fetch an unrecognized version or changed packageManager integrity", () => {
-    const f = createPnpmArchiveFixture(tempDirs.make);
+    const f = createPnpmArchiveFixture(tempDirs);
     for (const spec of [f.spec.replace("12.4.0", "12.4.1"), f.spec.replace(/.$/u, "z")]) {
       const result = f.run({}, spec);
       expect(result.status).toBe(0);
