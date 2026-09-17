@@ -2,6 +2,7 @@ import { createAbortError, isAbortError } from "../../infra/abort-signal.js";
 import { enqueueCommandInLane } from "../../process/command-queue.js";
 import { runWithGatewayIndependentRootWorkContinuation } from "../../process/gateway-work-admission.js";
 import { CommandLane } from "../../process/lanes.js";
+import { createDeferredCore } from "../../shared/deferred.js";
 import { isCronActiveJobMarkerCurrent } from "../active-jobs.js";
 import {
   CronRunReceiptRevisionError,
@@ -488,7 +489,7 @@ export async function enqueueRun(
   const scheduleOwnershipAtMs = state.deps.nowMs();
   const runId = `manual:${id}:${scheduleOwnershipAtMs}:${nextManualRunId++}`;
   const terminalTracker: ManualRunTerminalTracker = { emitted: false };
-  const acceptance = Promise.withResolvers<void>();
+  const acceptance = createDeferredCore();
   let accepted = false;
   const acceptQueue = () => {
     accepted = true;
