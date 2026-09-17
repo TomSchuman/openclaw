@@ -6,6 +6,7 @@ import {
   readDeferredPluginMigrations,
   recordDeferredPluginMigrations,
 } from "../infra/deferred-plugin-migrations.js";
+import * as sqliteReadOnlyWorker from "../infra/sqlite-readonly-worker.js";
 import {
   clearBundledDiscoveryModeMemo,
   prepareBundledDiscoveryMode,
@@ -87,43 +88,54 @@ it("strictly loads cold plugin metadata and records health without main-thread S
   expect(fs.readFileSync(configPath, "utf8")).toBe(raw);
 });
 
-it("loads retained migration inputs in an artifact-preserving async scope without parent SQL", async () => {
-  const raw = JSON.stringify({
-    gateway: { mode: "local" },
-    session: { store: "/srv/synthetic-session-state/sessions.json" },
-  });
-  const options = fixture(raw);
-  const pending = {
-    pluginId: "fixture-plugin",
-    reason: "The configured plugin is not installed.",
-    command: "openclaw plugins install @example/fixture-plugin",
-    configPaths: [["session", "store"]],
-    validationExcludedPaths: [["session", "store"]],
-  };
-  recordDeferredPluginMigrations({ env: options.env, pending: [pending] });
-  await closeOpenClawStateDatabaseAsync();
-  const databasePath = resolveOpenClawStateSqlitePath(options.env);
-  const family = [databasePath, `${databasePath}-wal`, `${databasePath}-shm`];
-  const familyBefore = family.map((file) => (fs.existsSync(file) ? fs.readFileSync(file) : null));
-  const mainSql = observeMainThreadSql();
-  try {
-    const config = await withArtifactPreservingStateReads(() =>
-      withPluginCache(createPluginCache(), () =>
-        createConfigIO({ ...options, observe: false }).loadConfigAsync(),
-      ),
+it.each(["load", "snapshot"] as const)(
+  "%s reads retained migration inputs without synchronous SQLite work or artifact changes",
+  async (method) => {
+    const raw = JSON.stringify({
+      gateway: { mode: "local" },
+      session: { store: "/srv/synthetic-session-state/sessions.json" },
+    });
+    const options = fixture(raw);
+    const pending = {
+      pluginId: "fixture-plugin",
+      reason: "The configured plugin is not installed.",
+      command: "openclaw plugins install @example/fixture-plugin",
+      configPaths: [["session", "store"]],
+      validationExcludedPaths: [["session", "store"]],
+    };
+    recordDeferredPluginMigrations({ env: options.env, pending: [pending] });
+    await closeOpenClawStateDatabaseAsync();
+    const databasePath = resolveOpenClawStateSqlitePath(options.env);
+    const family = [databasePath, `${databasePath}-wal`, `${databasePath}-shm`];
+    const familyBefore = family.map((file) => (fs.existsSync(file) ? fs.readFileSync(file) : null));
+    const mainSql = observeMainThreadSql();
+    const synchronousSnapshot = vi.spyOn(sqliteReadOnlyWorker, "runSqliteReadOnlyWorkerSync");
+    try {
+      const config = await withArtifactPreservingStateReads(() =>
+        withPluginCache(createPluginCache(), async () => {
+          const io = createConfigIO({ ...options, observe: false });
+          if (method === "load") {
+            return await io.loadConfigAsync();
+          }
+          const snapshot = await io.readConfigFileSnapshot();
+          expect(snapshot).toMatchObject({ valid: true, raw });
+          return snapshot.config;
+        }),
+      );
+      expect(config.gateway?.mode).toBe("local");
+      expect(config).not.toHaveProperty("session.store");
+      expect(synchronousSnapshot).not.toHaveBeenCalled();
+      mainSql.expectIdle();
+    } finally {
+      mainSql.restore();
+    }
+    expect(fs.readFileSync(options.configPath, "utf8")).toBe(raw);
+    expect(family.map((file) => (fs.existsSync(file) ? fs.readFileSync(file) : null))).toEqual(
+      familyBefore,
     );
-    expect(config.gateway?.mode).toBe("local");
-    expect(config).not.toHaveProperty("session.store");
-    mainSql.expectIdle();
-  } finally {
-    mainSql.restore();
-  }
-  expect(fs.readFileSync(options.configPath, "utf8")).toBe(raw);
-  expect(family.map((file) => (fs.existsSync(file) ? fs.readFileSync(file) : null))).toEqual(
-    familyBefore,
-  );
-  expect(readDeferredPluginMigrations({ env: options.env })).toEqual([pending]);
-});
+    expect(readDeferredPluginMigrations({ env: options.env })).toEqual([pending]);
+  },
+);
 
 it("rejects an invalid async load and rolls back its injected config environment", async () => {
   const { io, env } = fixture(

@@ -7,6 +7,7 @@ import {
   applyMessageDefaults,
   applyModelDefaults,
   applySessionDefaults,
+  hasAnthropicDefaultSignal,
 } from "./defaults.js";
 import { inheritLegacyDefaultAgentId } from "./legacy.default-agent-owner.js";
 import { normalizeExecSafeBinProfilesInConfig } from "./normalize-exec-safe-bin.js";
@@ -26,14 +27,16 @@ export function asRuntimeConfig(config: OpenClawConfig): RuntimeConfig {
   return config as RuntimeConfig;
 }
 
+type RuntimeConfigMaterializationOptions = {
+  env?: NodeJS.ProcessEnv;
+  homedir?: () => string;
+  manifestRegistry?: Pick<PluginManifestRegistry, "plugins">;
+  loadManifestRegistry?: () => Pick<PluginManifestRegistry, "plugins"> | undefined;
+};
+
 export function materializeRuntimeConfig(
   config: OpenClawConfig,
-  options: {
-    env?: NodeJS.ProcessEnv;
-    homedir?: () => string;
-    manifestRegistry?: Pick<PluginManifestRegistry, "plugins">;
-    loadManifestRegistry?: () => Pick<PluginManifestRegistry, "plugins"> | undefined;
-  } = {},
+  options: RuntimeConfigMaterializationOptions = {},
 ): RuntimeConfig {
   let next = applyMessageDefaults(config);
   next = applySessionDefaults(next);
@@ -48,4 +51,20 @@ export function materializeRuntimeConfig(
   normalizeConfigPaths(next, options);
   normalizeExecSafeBinProfilesInConfig(next);
   return asRuntimeConfig(inheritLegacyDefaultAgentId(config, next));
+}
+
+export async function materializeRuntimeConfigAsync(
+  config: OpenClawConfig,
+  options: Omit<RuntimeConfigMaterializationOptions, "loadManifestRegistry"> & {
+    loadManifestRegistry: () => Promise<Pick<PluginManifestRegistry, "plugins">>;
+  },
+): Promise<RuntimeConfig> {
+  const { loadManifestRegistry, ...prepared } = options;
+  if (
+    !prepared.manifestRegistry &&
+    (config.models?.providers || hasAnthropicDefaultSignal(config, options.env ?? process.env))
+  ) {
+    prepared.manifestRegistry = await loadManifestRegistry();
+  }
+  return materializeRuntimeConfig(config, prepared);
 }

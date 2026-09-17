@@ -26,7 +26,7 @@ import {
   warnOnConfigMiskeys,
 } from "./io.warnings.js";
 import { migrateLegacyContextBudgetConfig, migratePersistedImplicitMainRoster } from "./legacy.js";
-import { materializeRuntimeConfig } from "./materialize.js";
+import { materializeRuntimeConfig, materializeRuntimeConfigAsync } from "./materialize.js";
 import type { OpenClawConfig } from "./types.js";
 import {
   validateConfigObjectWithPlugins,
@@ -135,13 +135,13 @@ function* loadConfigWithEffects(
               ? { manifestRegistry: { plugins: [] } }
               : { loadManifestRegistry: () => metadata.load(config).manifestRegistry }),
           }),
-        async: async () =>
-          materializeRuntimeConfig(config, {
+        async: () =>
+          materializeRuntimeConfigAsync(config, {
             ...pathResolution,
-            manifestRegistry:
-              context.options.pluginValidation === "core-only"
-                ? { plugins: [] }
-                : (await metadata.loadAsync(config)).manifestRegistry,
+            ...(context.options.pluginValidation === "core-only"
+              ? { manifestRegistry: { plugins: [] } }
+              : {}),
+            loadManifestRegistry: async () => (await metadata.loadAsync(config)).manifestRegistry,
           }),
       });
       return yield* resolveConfigLoadEffect({

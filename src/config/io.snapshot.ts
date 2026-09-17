@@ -2,10 +2,7 @@ import { createHash } from "node:crypto";
 import { formatErrorMessage } from "../infra/errors.js";
 import { findStartupMaintenanceRequiredError } from "../infra/startup-maintenance-required.js";
 import { withPluginMetadataSnapshotScope } from "../plugins/current-plugin-metadata-snapshot.js";
-import {
-  withArtifactPreservingStateReads,
-  withSynchronousArtifactPreservingStateSnapshot,
-} from "../state/openclaw-state-db-readonly.js";
+import { withArtifactPreservingStateReads } from "../state/openclaw-state-db-readonly.js";
 import {
   includeContributionOwnsAgentRoster,
   includeContributionOwnsBindings,
@@ -49,10 +46,10 @@ import {
   migrateLegacyContextBudgetConfig,
   migratePersistedImplicitMainRoster,
 } from "./legacy.js";
-import { materializeRuntimeConfig } from "./materialize.js";
+import { materializeRuntimeConfig, materializeRuntimeConfigAsync } from "./materialize.js";
 import { ConfigMutationConflictError } from "./mutation-conflict.js";
-import type { ConfigFileSnapshot, LegacyConfigIssue, OpenClawConfig } from "./types.js";
-import { validateConfigObjectWithPlugins } from "./validation.js";
+import type { ConfigFileSnapshot, OpenClawConfig } from "./types.js";
+import { validateConfigObjectWithPluginsAsync } from "./validation.js";
 
 type InternalReadOptions = {
   allowCurrentPluginMetadata?: boolean;
@@ -89,15 +86,13 @@ export async function readConfigFileSnapshotInternal(
   maybeLoadDotEnvForConfig(deps.env);
   const envBeforeRead = snapshotEnv(deps.env);
   if (sourceRaw === undefined && !deps.fs.existsSync(configPath)) {
-    const migrated = migratePersistedImplicitMainRoster({});
-    const config = coerceConfig(migrated.config);
+    const config = coerceConfig(migratePersistedImplicitMainRoster({}).config);
     const metadata = context.createValidationPluginMetadataSnapshotLoader({
       effectiveConfigRaw: config,
       env: deps.env,
       allowCurrentPluginMetadata: options.allowCurrentPluginMetadata,
     });
     const coreOnly = context.options.pluginValidation === "core-only";
-    const legacyIssues: LegacyConfigIssue[] = [];
     return await finalizeReadConfigSnapshotInternalResult(deps, {
       snapshot: createConfigFileSnapshot({
         path: configPath,
@@ -109,16 +104,15 @@ export async function readConfigFileSnapshotInternal(
         // Missing config is the fresh-install default path: materialize the
         // same runtime defaults an existing empty {} config gets, so snapshot
         // consumers see identical out-of-box behavior either way.
-        runtimeConfig: materializeRuntimeConfig(config, {
+        runtimeConfig: await materializeRuntimeConfigAsync(config, {
           ...pathResolution,
-          ...(coreOnly
-            ? { manifestRegistry: { plugins: [] } }
-            : { loadManifestRegistry: () => metadata.load(config).manifestRegistry }),
+          ...(coreOnly ? { manifestRegistry: { plugins: [] } } : {}),
+          loadManifestRegistry: async () => (await metadata.loadAsync(config)).manifestRegistry,
         }),
         hash: hashConfigRaw(null),
         issues: [],
         warnings: [],
-        legacyIssues,
+        legacyIssues: [],
       }),
       pluginMetadataSnapshot: metadata.getSnapshot(),
     });
@@ -251,21 +245,20 @@ export async function readConfigFileSnapshotInternal(
     });
     const { deferredPluginMigrations, validated } = await deps.measure(
       "config.snapshot.read.validate",
-      () =>
-        withSynchronousArtifactPreservingStateSnapshot(() => {
-          const pending = context.resolveDeferredPluginMigrations();
-          return {
+      async () => {
+        const pending = await context.resolveDeferredPluginMigrationsAsync();
+        return {
+          deferredPluginMigrations: pending,
+          validated: await validateConfigObjectWithPluginsAsync(validationConfigRaw, {
+            ...pathResolution,
+            pluginValidation: context.options.pluginValidation,
+            loadPluginMetadataSnapshotAsync: pluginMetadata.loadAsync,
+            sourceRaw: effectiveParsed,
+            preservedLegacyRootKeys: context.options.preservedLegacyRootKeys,
             deferredPluginMigrations: pending,
-            validated: validateConfigObjectWithPlugins(validationConfigRaw, {
-              ...pathResolution,
-              pluginValidation: context.options.pluginValidation,
-              loadPluginMetadataSnapshot: pluginMetadata.load,
-              sourceRaw: effectiveParsed,
-              preservedLegacyRootKeys: context.options.preservedLegacyRootKeys,
-              deferredPluginMigrations: pending,
-            }),
-          };
-        }),
+          }),
+        };
+      },
     );
     if (!validated.ok) {
       const availableSnapshot = pluginMetadata.getSnapshot();
@@ -331,8 +324,9 @@ export async function readConfigFileSnapshotInternal(
           configPath,
           raw,
           parsed: effectiveParsed,
-          prepareBackup: (backup) => {
-            const prepared = context.prepareRecoveryBackupCandidate(backup);
+          prepareBackup: context.prepareRecoveryBackupCandidate,
+          prepareBackupAsync: async (backup) => {
+            const prepared = await context.prepareRecoveryBackupCandidateAsync(backup);
             recoveryCandidate = prepared.ok ? (prepared.candidate.config ?? null) : null;
             return prepared;
           },
@@ -477,6 +471,7 @@ export async function prepareConfigRecoveryFromContext(
       raw: current.raw,
       parsed: current.parsed,
       prepareBackup: previewContext.prepareRecoveryBackupCandidate,
+      prepareBackupAsync: previewContext.prepareRecoveryBackupCandidateAsync,
     });
     if (!plan) {
       return null;
@@ -528,7 +523,7 @@ export async function readConfigFileSnapshotWithPluginMetadataFromContext(
       env: context.deps.env,
       allowCurrentPluginMetadata: options.allowCurrentPluginMetadata,
     });
-    pluginMetadata.load(result.snapshot.sourceConfig);
+    await pluginMetadata.loadAsync(result.snapshot.sourceConfig);
     pluginMetadataSnapshot = pluginMetadata.getSnapshot();
   }
   return {

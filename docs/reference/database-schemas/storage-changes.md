@@ -311,8 +311,10 @@ recovery re-runs the same planner at apply and rejects changed or no-longer-elig
 candidates before file work. Unavailable health metadata retains the existing
 backup-based planning fallback. Health metadata remains best-effort; the file and
 health row are not one atomic transaction. Synchronous config readers and writers
-keep their existing APIs; config parsing, validation, and plugin preparation retain
-their own execution paths.
+keep their existing APIs. Async config snapshot readers prepare deferred migration
+obligations and plugin metadata through the async reader owners before plugin
+validation. Artifact-preserving inspection retains the source database files without
+waiting for a synchronous snapshot subprocess on the Gateway event loop.
 
 SQLite worker transport preserves complete result values. Results within the
 64 MiB inline reply budget keep their existing reply path; larger results are
