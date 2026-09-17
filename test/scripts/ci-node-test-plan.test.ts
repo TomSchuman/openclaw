@@ -2378,7 +2378,7 @@ describe("scripts/lib/ci-node-test-plan.mts", () => {
       // This fixture runs the real full-build guard, which needs more than the
       // available heap observed inside a small runner's retained tooling graph.
       expect(owner?.runner, runnerBackend).toBe(
-        runnerBackend === "blacksmith" ? EXTRA_LARGE_NODE_TEST_RUNNER : DEFAULT_NODE_TEST_RUNNER,
+        runnerBackend === "github" ? DEFAULT_NODE_TEST_RUNNER : EXTRA_LARGE_NODE_TEST_RUNNER,
       );
       const precise = createSelectedNodeTestShardBundles([compilerFixture], { runnerBackend });
       const preciseOwner = precise?.find((job) =>
@@ -2409,6 +2409,14 @@ describe("scripts/lib/ci-node-test-plan.mts", () => {
         expect(siblings.every((group) => group.runner === BUNDLED_NODE_TEST_RUNNER)).toBe(true);
       }
     }
+
+    const sdkFixture = "test/scripts/write-plugin-sdk-entry-dts.test.ts";
+    const sdkJobs = createSelectedNodeTestShardBundles([sdkFixture], { runnerBackend: "hybrid" });
+    expect(
+      sdkJobs?.find((job) =>
+        job.groups.some((group) => group.includePatterns?.includes(sdkFixture)),
+      )?.runner,
+    ).toBe(BUNDLED_NODE_TEST_RUNNER);
 
     const stripes = toolingShards.filter((shard) => /^core-tooling-\d+$/u.test(shard.shardName));
     expect(stripes).toHaveLength(16);

@@ -897,6 +897,7 @@ function expandCompactGroup(group: NodeTestShardGroup): NodeTestShardGroup[] {
 }
 const TOOLING_CONFIG = "test/vitest/vitest.tooling.config.ts";
 const TOOLING_DOCKER_TEST_FILE = "test/scripts/docker-build-helper.test.ts";
+const TOOLING_UNIFIED_DECLARATIONS_TEST_FILE = "test/scripts/write-unified-entry-dts.test.ts";
 const TOOLING_ISOLATED_CONFIG = "test/vitest/vitest.tooling-isolated.config.ts";
 // The full matrix is capped at 28 jobs. Admit the consistently slow serial
 // shards first so short alphabetical groups cannot leave them on the tail.
@@ -2239,7 +2240,7 @@ function resolveCiNodeTestRunner(shard: NodeTestShard, compactProfile?: string):
   // The full-build compiler fixture must pass the real 4352MB heap guard even
   // after earlier tooling tests have retained their module graphs.
   return KEEP_LARGE_NODE_TEST_RUNNER.has(shard.shardName) ||
-    shard.includePatterns?.includes("test/scripts/write-unified-entry-dts.test.ts")
+    shard.includePatterns?.includes(TOOLING_UNIFIED_DECLARATIONS_TEST_FILE)
     ? DEFAULT_NODE_TEST_RUNNER
     : BUNDLED_NODE_TEST_RUNNER;
 }
@@ -3336,7 +3337,12 @@ function createCompactNodeTestShardBundles(
     const capacityRunner =
       runner === EXTRA_LARGE_NODE_TEST_RUNNER ||
       planConcurrency === 2 ||
-      (isBlacksmithProfile && bin.some((group) => group.configs.includes(TOOLING_CONFIG)))
+      (isBlacksmithProfile && bin.some((group) => group.configs.includes(TOOLING_CONFIG))) ||
+      (options.runnerBackend === "hybrid" &&
+        usesBlacksmithCapacity(runner) &&
+        bin.some((group) =>
+          group.includePatterns?.includes(TOOLING_UNIFIED_DECLARATIONS_TEST_FILE),
+        ))
         ? EXTRA_LARGE_NODE_TEST_RUNNER
         : usesBlacksmithCapacity(runner) && bin.some((group) => group.shard_name === "agentic-cli")
           ? CAPACITY_NODE_TEST_RUNNER
