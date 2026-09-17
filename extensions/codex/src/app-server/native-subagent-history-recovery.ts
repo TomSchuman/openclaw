@@ -164,7 +164,8 @@ export class CodexNativeSubagentHistoryRecovery {
     if (
       !assignment ||
       !history ||
-      !["succeeded", "failed", "cancelled"].includes(task.status) ||
+      (history.parentThreadId !== state.parentThreadId &&
+        !["succeeded", "failed", "cancelled"].includes(task.status)) ||
       !this.canRestoreTask(task, state)
     ) {
       return { restorable: false as const };

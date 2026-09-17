@@ -4,6 +4,7 @@ import {
   CodexNativeSubagentMonitor,
   createClient,
   createRuntime,
+  nativeHistoryOwner,
   notifyChildStarted,
   registerParent,
   taskRecord,
@@ -88,7 +89,7 @@ async function acceptFollowup(client: Client, parentThreadId = "parent-thread") 
   });
 }
 
-function createFixture() {
+function createFixture(historyOwner?: ReturnType<typeof nativeHistoryOwner>) {
   const client = createClient();
   const runtime = createRuntime();
   const monitor = new CodexNativeSubagentMonitor(client.client, runtime);
@@ -102,7 +103,7 @@ function createFixture() {
     unsubscribe();
     monitor.dispose();
   });
-  registerParent(monitor).bindTurn("parent-turn");
+  registerParent(monitor, undefined, undefined, historyOwner).bindTurn("parent-turn");
   return { client, runtime, monitor, events };
 }
 
@@ -135,28 +136,87 @@ async function awaitingAdmission(
 }
 
 describe("native wait assignment projection", () => {
-  it("reprojects an observed receiver when discovery restores its recorded follow-up assignment", async () => {
-    const { client, runtime, events } = createFixture();
-    await notifyChildStarted(client, "parent-thread", "waiter");
-    await startTurn(client, "waiter", "waiter-turn");
-    await waitItem(client, "started", ["receiver"]);
-    expect(events.at(-1)?.data.wait).toMatchObject({
-      dependencies: [{ runId: "codex-thread:receiver" }],
-    });
-    runtime.listTaskRecords.mockReturnValue([
-      taskRecord({ childThreadId: "receiver:turn:turn-b" }),
-    ]);
-    await notifyChildStarted(client, "parent-thread", "receiver");
-    expect(events.at(-1)?.data).toMatchObject({
-      state: "waiting",
-      executionId: "waiter-turn",
-      wait: {
+  it.each(["running", "queued", "succeeded"] as const)(
+    "reprojects an observed receiver when discovery restores its recorded follow-up assignment (%s)",
+    async (status) => {
+      const historyOwner = nativeHistoryOwner();
+      const { client, runtime, events } = createFixture(historyOwner);
+      await notifyChildStarted(client, "parent-thread", "waiter");
+      await startTurn(client, "waiter", "waiter-turn");
+      await waitItem(client, "started", ["receiver"]);
+      expect(events.at(-1)?.data.wait).toMatchObject({
+        dependencies: [{ runId: "codex-thread:receiver" }],
+      });
+      runtime.listTaskRecords.mockReturnValue([
+        taskRecord({ childThreadId: "receiver:turn:turn-b", status, historyOwner }),
+      ]);
+      await notifyChildStarted(client, "parent-thread", "receiver");
+      expect(events.at(-1)?.data).toMatchObject({
+        state: "waiting",
+        executionId: "waiter-turn",
+        wait: {
+          kind: "children",
+          dependencies: [{ runId: "codex-thread:receiver:turn:turn-b" }],
+          pendingCount: 1,
+        },
+      });
+      if (status !== "succeeded") {
+        const projectedEventCount = events.length;
+        await startTurn(client, "receiver", "turn-b");
+        await endTurn(client, "receiver", "turn-b");
+        expect(runtime.finalizeTaskRunByRunId).toHaveBeenCalledWith(
+          expect.objectContaining({
+            runId: "codex-thread:receiver:turn:turn-b",
+            status: "succeeded",
+            terminalSummary: "turn-b",
+          }),
+        );
+        expect(events).toHaveLength(projectedEventCount);
+      }
+    },
+  );
+
+  it.each(["missing-history", "foreign-history", "active-foreign-parent"])(
+    "does not adopt an ineligible recorded receiver into an observed wait: %s",
+    async (scenario) => {
+      const historyOwner = nativeHistoryOwner();
+      const { client, runtime, events } = createFixture(historyOwner);
+      await notifyChildStarted(client, "parent-thread", "waiter");
+      await startTurn(client, "waiter", "waiter-turn");
+      await waitItem(client, "started", ["receiver"]);
+      const eventCount = events.length;
+      runtime.listTaskRecords.mockReturnValue([
+        taskRecord({
+          childThreadId: "receiver:turn:turn-b",
+          status: scenario === "active-foreign-parent" ? "running" : "succeeded",
+          ...(scenario === "missing-history"
+            ? {}
+            : {
+                historyOwner:
+                  scenario === "foreign-history"
+                    ? { ...historyOwner, connectionFingerprint: "b".repeat(64) }
+                    : scenario === "active-foreign-parent"
+                      ? { ...historyOwner, parentThreadId: "other-parent" }
+                      : historyOwner,
+              }),
+        }),
+      ]);
+      await notifyChildStarted(client, "parent-thread", "receiver");
+      if (scenario === "active-foreign-parent") {
+        await startTurn(client, "receiver", "turn-b");
+        await endTurn(client, "receiver", "turn-b");
+        expect(runtime.finalizeTaskRunByRunId).not.toHaveBeenCalledWith(
+          expect.objectContaining({ runId: "codex-thread:receiver:turn:turn-b" }),
+        );
+      }
+      expect(events).toHaveLength(eventCount);
+      expect(events.at(-1)?.data.wait).toMatchObject({
         kind: "children",
-        dependencies: [{ runId: "codex-thread:receiver:turn:turn-b" }],
+        dependencies: [{ runId: "codex-thread:receiver" }],
         pendingCount: 1,
-      },
-    });
-  });
+      });
+    },
+  );
 
   it.each([
     { previousStatus: "completed", laterPendingTurn: false },

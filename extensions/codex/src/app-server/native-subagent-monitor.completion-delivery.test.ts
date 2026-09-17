@@ -26,10 +26,7 @@ import {
 } from "./native-subagent-monitor.test-support.js";
 import type { CodexServerNotification, JsonObject } from "./protocol.js";
 
-function contextualNativeCompletion(
-  agentPath = "child-thread",
-  result = "The build passed.",
-): CodexServerNotification {
+function contextualNativeCompletion(agentPath = "child-thread", result = "The build passed.") {
   return {
     method: "rawResponseItem/completed",
     params: {
@@ -49,7 +46,7 @@ function contextualNativeCompletion(
         },
       },
     },
-  };
+  } satisfies CodexServerNotification;
 }
 
 describe("CodexNativeSubagentMonitor", () => {
@@ -349,7 +346,7 @@ describe("CodexNativeSubagentMonitor", () => {
           },
         ];
       } else if (source === "quoted-fragment") {
-        const part = (item.content as JsonObject[])[0]!;
+        const part = receipt.params.item.content[0]!;
         part.text = `Example: ${part.text}`;
       }
       try {

@@ -358,7 +358,7 @@ export function nativeCompletionNotification(
   };
 }
 
-export function deliveredNativeCompletion(): CodexServerNotification {
+export function deliveredNativeCompletion() {
   return {
     method: "rawResponseItem/completed",
     params: {
@@ -376,7 +376,7 @@ export function deliveredNativeCompletion(): CodexServerNotification {
         ],
       },
     },
-  };
+  } satisfies CodexServerNotification;
 }
 
 export function closeAgentNotification(params: {
