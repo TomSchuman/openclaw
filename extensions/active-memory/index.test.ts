@@ -41,24 +41,10 @@ import * as transcriptWatch from "./transcript-watch.js";
 const UNPAIRED_SURROGATE_RE =
   /[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/;
 
-async function expectPathMissing(targetPath: string): Promise<void> {
-  try {
-    await fs.access(targetPath);
-  } catch (error) {
-    expect((error as NodeJS.ErrnoException).code).toBe("ENOENT");
-    return;
-  }
-  throw new Error(`expected missing path ${targetPath}`);
-}
-
 async function expectSingleTranscriptArtifact(directory: string): Promise<string> {
   const files = await fs.readdir(directory);
   expect(files).toEqual([expect.stringMatching(/^active-memory-[a-z0-9]+-[a-f0-9]{8}\.jsonl$/)]);
-  const filename = files[0];
-  if (!filename) {
-    throw new Error(`expected active-memory transcript in ${directory}`);
-  }
-  return path.join(directory, filename);
+  return path.join(directory, expectDefined(files[0], "transcript artifact"));
 }
 
 const hoisted = vi.hoisted(() => {
@@ -5966,7 +5952,9 @@ describe("active-memory plugin", () => {
     await runPromptBuild({ prompt: "what wings should i order? temp transcript path" });
 
     expect(mkdtempSpy).not.toHaveBeenCalled();
-    await expectPathMissing(path.join(stateDir, "plugins", "active-memory", "transcripts"));
+    await expect(
+      fs.access(path.join(stateDir, "plugins", "active-memory", "transcripts")),
+    ).rejects.toMatchObject({ code: "ENOENT" });
   });
 
   it("persists subagent transcripts in a separate directory when enabled", async () => {
