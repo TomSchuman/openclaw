@@ -346,7 +346,7 @@ function resolvedPermissionLabel(
     : undefined;
 }
 
-export function listAgentsForGateway(
+export async function listAgentsForGateway(
   cfg: OpenClawConfig,
   modelCatalog?: ModelCatalogEntry[],
   options?: {
@@ -354,15 +354,16 @@ export function listAgentsForGateway(
     includeSystem?: boolean;
     httpAvatarBasePath?: string;
   },
-): {
+): Promise<{
   defaultId: string;
   ownership: GatewayAgentOwnership;
   selectionRequired: boolean;
   mainKey: string;
   scope: SessionScope;
   agents: GatewayAgentRow[];
-} {
+}> {
   const basic = listGatewayAgentsBasic(cfg);
+  const provenanceRecords = await listAgentProvenance();
   const execApprovals = loadExecApprovals();
   const identityById = new Map<string, GatewayAgentRow["identity"]>();
   for (const entry of listAgentEntries(cfg)) {
@@ -395,7 +396,7 @@ export function listAgentsForGateway(
     ? basic.agents
     : basic.agents.filter((entry) => entry.kind !== "system");
   const provenanceById = new Map(
-    listAgentProvenance().map((record) => [record.agentId, record] as const),
+    provenanceRecords.map((record) => [record.agentId, record] as const),
   );
   const agents = roster.map((entry) => {
     const { id } = entry;
