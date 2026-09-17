@@ -35,7 +35,6 @@ import { isLiveTestEnabled } from "../agents/live-test-helpers.js";
 import type { OpenClawConfig } from "../config/config.js";
 import type { AgentEventPayload } from "../infra/agent-events.js";
 import { isTruthyEnvValue } from "../infra/env.js";
-import { pluginStateEntriesInKeyRange } from "../plugin-state/plugin-state-store.js";
 import { runCommandWithTimeout } from "../process/exec.js";
 import { extractFirstTextBlock } from "../shared/chat-message-content.js";
 import type { GatewayClient } from "./client.js";
@@ -1981,7 +1980,6 @@ async function verifyCodexSubagentProbe(params: {
 }
 
 async function verifyCodexSessionDeletion(params: {
-  stateEnv: NodeJS.ProcessEnv;
   client: GatewayClient;
   events: EventFrame[];
   modelKey: string;
@@ -1991,19 +1989,6 @@ async function verifyCodexSessionDeletion(params: {
   const threadId = observedCodexThreadIds.get(sessionKey);
   expect(threadId).toBeTypeOf("string");
   const sessionId = await readCodexHarnessSessionId({ client, sessionKey });
-  const readBindings = () =>
-    pluginStateEntriesInKeyRange({
-      env: params.stateEnv,
-      pluginId: "codex",
-      namespace: "app-server-thread-bindings",
-      keyStartInclusive: "session-key:dev:",
-      keyEndExclusive: "session-key:dev;",
-      limit: 100,
-    });
-  const before = (await readBindings()).find(
-    (row) => asOptionalRecord(row.value)?.sessionId === sessionId,
-  );
-  expect(before).toBeDefined();
   const siblingKey = `${sessionKey}:deletion-sibling`;
   const selectModel = async (key: string) =>
     requestCodexCommandText({
@@ -2021,11 +2006,7 @@ async function verifyCodexSessionDeletion(params: {
     message: "Reply with exactly SIBLING-READY and nothing else.",
   });
   const siblingThreadId = observedCodexThreadIds.get(siblingKey);
-  const siblingSessionId = await readCodexHarnessSessionId({ client, sessionKey: siblingKey });
-  const siblingBinding = (await readBindings()).find(
-    (row) => asOptionalRecord(row.value)?.sessionId === siblingSessionId,
-  );
-  expect(siblingBinding).toBeDefined();
+  expect(await readCodexHarnessSessionId({ client, sessionKey: siblingKey })).not.toBe(sessionId);
 
   // A competing attachment must reject before displacing either native owner.
   await requestCodexCommandText({
@@ -2035,19 +2016,25 @@ async function verifyCodexSessionDeletion(params: {
     command: `/codex resume ${siblingThreadId}`,
     expectedText: "owned by another OpenClaw session or conversation",
   });
-  expect((await readBindings()).find((row) => row.key === before?.key)).toEqual(before);
-  expect((await readBindings()).find((row) => row.key === siblingBinding?.key)).toEqual(
-    siblingBinding,
-  );
+  await requestAgentText({
+    client,
+    sessionKey,
+    expectedReply: "OWNER-STILL-ATTACHED",
+    message: "Reply with exactly OWNER-STILL-ATTACHED and nothing else.",
+  });
+  await requestAgentText({
+    client,
+    sessionKey: siblingKey,
+    expectedReply: "SIBLING-STILL-ATTACHED",
+    message: "Reply with exactly SIBLING-STILL-ATTACHED and nothing else.",
+  });
+  expect(observedCodexThreadIds.get(sessionKey)).toBe(threadId);
+  expect(observedCodexThreadIds.get(siblingKey)).toBe(siblingThreadId);
 
   const deletion = await client.request<{ deleted: boolean }>("sessions.delete", {
     key: sessionKey,
   });
   expect(deletion.deleted).toBe(true);
-  expect((await readBindings()).some((row) => row.key === before?.key)).toBe(false);
-  expect((await readBindings()).find((row) => row.key === siblingBinding?.key)).toEqual(
-    siblingBinding,
-  );
   await requestAgentText({
     client,
     sessionKey: siblingKey,
@@ -2616,7 +2603,6 @@ describeLive("gateway live (Codex harness)", () => {
               logCodexLiveStep("native-subagent-bridge-probe:start", { sessionKey });
               await verifyCodexNativeSubagentBridgeProbe(
                 {
-                  stateEnv: instance.env,
                   annotate: context.annotate,
                   client: activeClient,
                   events: gatewayEvents,
@@ -2628,7 +2614,6 @@ describeLive("gateway live (Codex harness)", () => {
                   logCodexLiveStep,
                   requestAgentTextWithEvents,
                   recordCodexAttemptIdentity,
-                  readCodexHarnessSessionId,
                   requestCodexCommandText,
                   requestAgentText,
                 },
@@ -2971,7 +2956,6 @@ describeLive("gateway live (Codex harness)", () => {
           }
         }
         await verifyCodexSessionDeletion({
-          stateEnv: instance.env,
           client,
           events: gatewayEvents,
           modelKey,

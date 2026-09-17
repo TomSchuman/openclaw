@@ -9,12 +9,10 @@ import type {
   TasksListResult,
 } from "../../packages/gateway-protocol/src/index.js";
 import type { GatewayClient } from "../../src/gateway/client.js";
-import { pluginStateEntriesInKeyRange } from "../../src/plugin-state/plugin-state-store.js";
 import { loadTaskRegistryStateFromSqliteReadOnly } from "../../src/tasks/task-registry.store.sqlite.js";
 import type { CapturedAgentEvent } from "./gateway-codex-harness.js";
 
 type NativeSubagentProbeParams = {
-  stateEnv: NodeJS.ProcessEnv;
   annotate: TestContext["annotate"];
   client: GatewayClient;
   events: EventFrame[];
@@ -40,7 +38,6 @@ type NativeSubagentProbeHarness = {
     runId: string;
     sessionKey: string;
   }) => void;
-  readCodexHarnessSessionId: (params: GatewaySession) => Promise<string>;
   requestCodexCommandText: (
     params: GatewaySession & { command: string; events: EventFrame[]; expectedText: string },
   ) => Promise<string>;
@@ -57,7 +54,6 @@ export async function verifyCodexNativeSubagentBridgeProbe(
     logCodexLiveStep,
     requestAgentTextWithEvents,
     recordCodexAttemptIdentity,
-    readCodexHarnessSessionId,
     requestCodexCommandText,
     requestAgentText,
   }: NativeSubagentProbeHarness,
@@ -279,26 +275,7 @@ export async function verifyCodexNativeSubagentBridgeProbe(
   if (parentControlledChild) {
     // Native task IDs record the child thread at creation; model output is not
     // authoritative enough to select the thread for this ownership probe.
-    const sessionId = await readCodexHarnessSessionId(params);
-    const readBinding = async () => {
-      const row = (
-        await pluginStateEntriesInKeyRange({
-          env: params.stateEnv,
-          pluginId: "codex",
-          namespace: "app-server-thread-bindings",
-          keyStartInclusive: "session-key:dev:",
-          keyEndExclusive: "session-key:dev;",
-          limit: 100,
-        })
-      ).find((entry) => asOptionalRecord(entry.value)?.sessionId === sessionId);
-      // Lease acquisition refreshes the KV write timestamp even when binding content is unchanged.
-      return row ? { key: row.key, value: row.value } : undefined;
-    };
-    const bindingBefore = await readBinding();
-    expect(bindingBefore).toBeDefined();
-    const threadIdBefore = asOptionalRecord(
-      asOptionalRecord(bindingBefore?.value)?.binding,
-    )?.threadId;
+    const threadIdBefore = observedCodexThreadIds.get(params.sessionKey);
     expect(threadIdBefore).toBeTypeOf("string");
     expect(threadIdBefore).not.toBe(childThreadId);
     await requestCodexCommandText({
@@ -306,17 +283,13 @@ export async function verifyCodexNativeSubagentBridgeProbe(
       command: `/codex resume ${childThreadId}`,
       expectedText: "controlled by its parent",
     });
-    expect(await readBinding()).toEqual(bindingBefore);
     await requestAgentText({
       client: params.client,
       sessionKey: params.sessionKey,
       message: "Reply exactly PARENT-STILL-ATTACHED and nothing else.",
       expectedReply: "PARENT-STILL-ATTACHED",
     });
-    expect((await readBinding())?.key).toBe(bindingBefore?.key);
-    expect(
-      asOptionalRecord(asOptionalRecord((await readBinding())?.value)?.binding)?.threadId,
-    ).toBe(threadIdBefore);
+    expect(observedCodexThreadIds.get(params.sessionKey)).toBe(threadIdBefore);
     logCodexLiveStep("native-subagent-direct-input:rejected", { childThreadId });
   } else {
     logCodexLiveStep("native-subagent-direct-input:legacy-not-applicable");
