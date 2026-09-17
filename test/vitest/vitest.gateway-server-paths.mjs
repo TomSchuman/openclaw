@@ -3,6 +3,11 @@ export const gatewayPluginTestFiles = ["test/plugins/codex-model-catalog.gateway
 
 // Native database consumers retain the Gateway runner and setup in forked processes.
 export const gatewayDatabaseWorkerTestFiles = [
+  "src/gateway/managed-image-record-store.test.ts",
+  "src/gateway/managed-image-attachments.sqlite-visibility.test.ts",
+  "src/gateway/managed-outgoing-gc-availability.test.ts",
+  "src/gateway/internal-source-reply-persistence.test.ts",
+  "src/gateway/server-methods/chat-send-commentary-media.test.ts",
   "src/gateway/config-reload.test.ts",
   "src/gateway/gateway-code-mode-clock.test.ts",
   "src/gateway/gateway.chat-redaction.test.ts",
