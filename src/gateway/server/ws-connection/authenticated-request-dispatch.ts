@@ -22,6 +22,7 @@ import {
 import { runOutsideGatewayRootWorkAdmission } from "../../../process/gateway-work-admission.js";
 import { createLazyPromise } from "../../../shared/lazy-runtime.js";
 import { createExpectedProfileBinding } from "../../expected-profile.js";
+import { bindWebSocketRequestMutationAuthority } from "../../server-methods/session-mutation-guards.js";
 import type { GatewayRequestEntry } from "../../server-request-entry.js";
 import { classifyGatewayStaleInstall } from "../../stale-install.js";
 import { formatForLog, logWs } from "../../ws-log.js";
@@ -307,20 +308,24 @@ export function createGatewayAuthenticatedRequestDispatcher(params: {
         }
         await runOutsideGatewayRootWorkAdmission(() =>
           handleGatewayRequest(
-            {
-              req,
-              respond: respondWithAuthority,
+            bindWebSocketRequestMutationAuthority(
+              {
+                req,
+                respond: respondWithAuthority,
+                client,
+                isWebchatConnect: params.isWebchatConnect,
+                hasCurrentClientAuthority,
+                expectedProfileBinding,
+                extraHandlers,
+                methodRegistry: getMethodRegistry?.(),
+                context,
+                ...(admission ? { admission } : {}),
+                requestEntry: entry,
+                ...(requestController ? { signal: requestController.signal } : {}),
+              },
               client,
-              isWebchatConnect: params.isWebchatConnect,
-              hasCurrentClientAuthority,
-              expectedProfileBinding,
-              extraHandlers,
-              methodRegistry: getMethodRegistry?.(),
-              context,
-              ...(admission ? { admission } : {}),
-              requestEntry: entry,
-              ...(requestController ? { signal: requestController.signal } : {}),
-            },
+              getRequiredSharedGatewaySessionGeneration,
+            ),
             diagnostics,
           ),
         );
