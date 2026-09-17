@@ -10,8 +10,19 @@ import {
   reconcileSessionTranscriptIndexes,
   waitForSessionTranscriptIndexReconcile,
 } from "../config/sessions/session-transcript-reconcile.js";
+import { sessionChanges } from "../sessions/session-row-changes.js";
 import { onInternalSessionTranscriptUpdate } from "../sessions/transcript-events.js";
-import { openOpenClawAgentDatabase } from "../state/openclaw-agent-db.js";
+import {
+  createAgentDatabaseInspectionRefusal,
+  preparePendingAgentDatabase,
+  recordAgentDatabaseAdmissions,
+} from "../state/agent-database-admission.js";
+import {
+  closeOpenClawAgentDatabaseByPath,
+  openOpenClawAgentDatabase,
+  resolveOpenClawAgentSqlitePath,
+} from "../state/openclaw-agent-db.js";
+import { listOpenClawAgentDatabasesForTest } from "../state/openclaw-agent-db.test-support.js";
 import { withOpenClawTestState } from "../test-utils/openclaw-test-state.js";
 import { sessionByKeyReadHandlers } from "./server-methods/sessions-read-by-key.js";
 import {
@@ -24,6 +35,46 @@ import { createSessionRowProjection } from "./session-row-projection.js";
 import * as titles from "./session-transcript-title-reader.js";
 
 afterEach(() => vi.restoreAllMocks());
+
+it.each(["background", "capture"] as const)(
+  "keeps %s projection reads outside borrowed startup admission and admits completed recovery",
+  async (read) => {
+    await withOpenClawTestState({ scenario: "minimal" }, async () => {
+      const cfg = { agents: { list: [{ id: "main", default: true }, { id: "worker" }] } };
+      const query = { agentId: "worker", key: "agent:worker:recovering" };
+      replaceSessionEntrySync(
+        { agentId: query.agentId, sessionKey: query.key },
+        { sessionId: "recovering", updatedAt: 1 },
+      );
+      const path = resolveOpenClawAgentSqlitePath({ agentId: query.agentId });
+      closeOpenClawAgentDatabaseByPath(path, query.agentId);
+      const refusal = createAgentDatabaseInspectionRefusal({
+        agentId: query.agentId,
+        paths: [path],
+        pending: true,
+        reason: "Startup preparation is still pending",
+      });
+      recordAgentDatabaseAdmissions([refusal], { source: "startup" });
+      const projection = await createSessionRowProjection({ cfg });
+      try {
+        expect(projection.select()).toEqual([]);
+        await preparePendingAgentDatabase(refusal, { assertCurrent() {} }, async () => {
+          sessionChanges.emit({ all: true, scope: "config" });
+          if (read === "capture") {
+            expect(projection.capture(query)).toBeUndefined();
+          }
+          await projection.ensureMaterialized();
+          expect(projection.snapshot(query).row).toBeNull();
+          expect(listOpenClawAgentDatabasesForTest().some((db) => db.path === path)).toBe(false);
+        });
+        await projection.ensureMaterialized();
+        expect(projection.snapshot(query).row?.sessionId).toBe("recovering");
+      } finally {
+        projection.dispose();
+      }
+    });
+  },
+);
 
 it("heals resident titles after reconciliation without a transcript mutation or clean-read SQLite", async () => {
   await withOpenClawTestState({ scenario: "minimal" }, async () => {

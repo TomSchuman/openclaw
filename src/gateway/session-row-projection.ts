@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { performance } from "node:perf_hooks";
 import { isDeepStrictEqual } from "node:util";
 import { listAgentIds, withAgentRosterFactsBatch } from "../agents/agent-scope-config.js";
@@ -58,6 +59,8 @@ export async function createSessionRowProjection(params: {
   getModelCatalog?: () => Promise<records.Inputs["modelCatalog"]>;
   context?: Parameters<typeof readSessionRowFacts>[0]["context"];
 }) {
+  // Publications may borrow startup admission; projection work retains its own authority.
+  const inOwnerContext = AsyncLocalStorage.snapshot();
   let cfg = params.cfg;
   let modelCatalog = params.modelCatalog;
   const rows = new Map<string, records.Row>();
@@ -521,7 +524,7 @@ export async function createSessionRowProjection(params: {
       return pending ?? Promise.resolve();
     }
     return (pending ??= yieldSessionListWork()
-      .then(drain)
+      .then(() => inOwnerContext(drain))
       .then(
         () => {
           pending = undefined;
@@ -622,7 +625,7 @@ export async function createSessionRowProjection(params: {
   return {
     capture(query: records.Lookup) {
       if (!disposed && topologyDirty) {
-        topology();
+        inOwnerContext(topology);
       }
       const row = lookup(query);
       return row && dirty.has(records.identity(row))
