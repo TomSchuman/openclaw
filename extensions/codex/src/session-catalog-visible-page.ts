@@ -20,7 +20,7 @@ type VisiblePageParams = {
   signal?: AbortSignal;
 };
 
-/** One outer fill; each step awaits the existing complete, shared control-page producer. */
+/** Fill exclusions from bounded resident pages. */
 export class CodexCatalogVisiblePage {
   private readonly sessions: CodexSessionCatalogPage["sessions"] = [];
   private cursor: string | undefined;
@@ -46,16 +46,12 @@ export class CodexCatalogVisiblePage {
     }
     let rawPage: CodexSessionCatalogPage;
     try {
-      rawPage = await params.control.listPage(
-        {
-          limit: params.limit - this.sessions.length,
-          ...(this.cursor ? { cursor: this.cursor } : {}),
-          ...(params.searchTerm ? { searchTerm: params.searchTerm } : {}),
-          ...(params.cwd ? { cwd: params.cwd } : {}),
-        },
-        undefined,
-        !params.cursor,
-      );
+      rawPage = await params.control.listPage({
+        limit: params.limit - this.sessions.length,
+        ...(this.cursor ? { cursor: this.cursor } : {}),
+        ...(params.searchTerm ? { searchTerm: params.searchTerm } : {}),
+        ...(params.cwd ? { cwd: params.cwd } : {}),
+      });
     } finally {
       if (diagnostics && !diagnostics.closed) {
         diagnostics.fields.controlWaitSumMs =
