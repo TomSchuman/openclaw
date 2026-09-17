@@ -129,6 +129,13 @@ export async function preflightUpdateCommandSchemas(params: {
       for (const service of admission.services.values()) {
         if (service.serviceUpdateVerdict?.kind === "unavailable") {
           preflightNotes.push(service.serviceUpdateVerdict.message);
+        } else if (
+          service.serviceUpdateVerdict?.kind === "owned" &&
+          service.serviceUpdateVerdict.requiresInstallRootRefresh
+        ) {
+          preflightNotes.push(
+            `Gateway service targets ${service.serviceUpdateVerdict.root}; ${shouldRestart ? "would reconcile it with" : "restart is disabled; run openclaw doctor --fix to reconcile it with"} the active installation ${root}.`,
+          );
         }
       }
       const target =
