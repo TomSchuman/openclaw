@@ -9,8 +9,11 @@ import type { CodexAppServerAuthProfileLookup } from "./auth-profile.js";
 import {
   createThreadOwnerToken,
   forgetThreadOwnership,
+  hasSiblingThreadWork,
   hasThreadOwnership,
   invalidateThreadOwnership,
+  type RetainedLiveThread,
+  type ThreadOwnershipState,
   type ThreadOwnerToken,
   type ThreadReleaseTransition,
 } from "./client-thread-owner.js";
@@ -24,26 +27,12 @@ type ClientRuntimeContext = CodexAppServerAuthProfileLookup & {
   onAuthRefreshFailure?: () => void;
 };
 
-type ClientRuntime = {
+type ClientRuntime = ThreadOwnershipState & {
   context: ClientRuntimeContext;
   authHandoff?: CodexAppServerAuthHandoff;
-  closed: boolean;
-  retainedThreads: Map<string, RetainedLiveThread>;
-  claimedThreads: Map<string, ThreadOwnerToken>;
-  releasingThreads: Map<string, ThreadReleaseTransition>;
-  protectedThreads: Map<string, number>;
   sessionMetadata: Map<string, { sessionsRoot: string; rolloutPath: string; metadata: JsonObject }>;
   workspaceReferences: Map<string, { digest?: string; needsReintroduction: boolean }>;
   evictionTimer?: ReturnType<typeof setTimeout>;
-};
-
-type RetainedLiveThread = {
-  ownerToken?: ThreadOwnerToken;
-  configFingerprint?: string;
-  ephemeralPolicy?: string;
-  serviceTier?: CodexServiceTier | null;
-  expiresAt: number;
-  release: (threadId: string, assertCurrent?: () => void) => Promise<void>;
 };
 
 export type CodexAppServerLiveThreadOwnership = {
@@ -679,26 +668,7 @@ export function hasCodexAppServerSiblingThreadWork(
   client: CodexAppServerClient,
   threadId: string,
 ): boolean {
-  const runtime = configuredClients.get(client);
-  if (!runtime || runtime.closed) {
-    return false;
-  }
-  // A protected parent can be settled while its native children still write.
-  if (runtime.protectedThreads.size > 0) {
-    return true;
-  }
-  // Ephemeral history exists only on this process, even after its turn settles.
-  for (const [retainedThreadId, retained] of runtime.retainedThreads) {
-    if (retainedThreadId !== threadId && retained.ephemeralPolicy !== undefined) {
-      return true;
-    }
-  }
-  for (const claimedThreadId of runtime.claimedThreads.keys()) {
-    if (claimedThreadId !== threadId) {
-      return true;
-    }
-  }
-  return false;
+  return hasSiblingThreadWork(configuredClients.get(client), threadId);
 }
 
 /** Release the exact physical subscription and finish only its observed ownership generation. */

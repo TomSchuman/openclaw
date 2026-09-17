@@ -1,4 +1,5 @@
 import { embeddedAgentLog, formatErrorMessage } from "openclaw/plugin-sdk/agent-harness-runtime";
+import type { CodexServiceTier } from "./protocol.js";
 
 export type ThreadOwnerToken = {
   invalidated: boolean;
@@ -10,6 +11,23 @@ export type ThreadReleaseTransition = {
   physicalRelease?: Promise<void>;
   retainedOwnerToken?: ThreadOwnerToken;
   invalidated?: boolean;
+};
+
+export type RetainedLiveThread = {
+  ownerToken?: ThreadOwnerToken;
+  configFingerprint?: string;
+  ephemeralPolicy?: string;
+  serviceTier?: CodexServiceTier | null;
+  expiresAt: number;
+  release: (threadId: string, assertCurrent?: () => void) => Promise<void>;
+};
+
+export type ThreadOwnershipState = {
+  closed: boolean;
+  retainedThreads: Map<string, RetainedLiveThread>;
+  claimedThreads: Map<string, ThreadOwnerToken>;
+  releasingThreads: Map<string, ThreadReleaseTransition>;
+  protectedThreads: Map<string, number>;
 };
 
 export function createThreadOwnerToken(
@@ -36,14 +54,8 @@ export function createThreadOwnerToken(
   return owner;
 }
 
-type ThreadOwnershipState = {
-  retainedThreads: Pick<Map<string, { ownerToken?: ThreadOwnerToken }>, "get" | "delete">;
-  claimedThreads: Pick<Map<string, ThreadOwnerToken>, "get" | "delete">;
-  releasingThreads: Pick<Map<string, ThreadReleaseTransition>, "get">;
-};
-
 export function hasThreadOwnership(
-  runtime: (ThreadOwnershipState & { closed: boolean }) | undefined,
+  runtime: ThreadOwnershipState | undefined,
   threadId: string,
 ): boolean {
   return (
@@ -53,6 +65,31 @@ export function hasThreadOwnership(
       runtime.releasingThreads.get(threadId) !== undefined ||
       runtime.claimedThreads.get(threadId) !== undefined)
   );
+}
+
+export function hasSiblingThreadWork(
+  runtime: ThreadOwnershipState | undefined,
+  threadId: string,
+): boolean {
+  if (!runtime || runtime.closed) {
+    return false;
+  }
+  // A protected parent can be settled while its native children still write.
+  if (runtime.protectedThreads.size > 0) {
+    return true;
+  }
+  // Ephemeral history exists only on this process, even after its turn settles.
+  for (const [retainedThreadId, retained] of runtime.retainedThreads) {
+    if (retainedThreadId !== threadId && retained.ephemeralPolicy !== undefined) {
+      return true;
+    }
+  }
+  for (const claimedThreadId of runtime.claimedThreads.keys()) {
+    if (claimedThreadId !== threadId) {
+      return true;
+    }
+  }
+  return false;
 }
 
 export function invalidateThreadOwnership(runtime: ThreadOwnershipState, threadId: string): void {

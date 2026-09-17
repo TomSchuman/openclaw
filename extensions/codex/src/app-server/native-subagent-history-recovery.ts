@@ -12,6 +12,7 @@ import {
   readCodexNativeSubagentHistoryOwner,
 } from "./native-subagent-history-owner.js";
 import type {
+  ChildState,
   ParentState,
   TaskRecoveryCandidate,
   NativeSubagentAssignment,
@@ -143,6 +144,34 @@ export class CodexNativeSubagentHistoryRecovery {
       return false;
     }
     return task.endedAt >= now - RECENT_TERMINAL_TASK_RECONCILE_GRACE_MS;
+  }
+
+  prepareTaskRead(candidate: TaskRecoveryCandidate, child: ChildState | undefined, now: number) {
+    const tasks = candidate.taskRuntime
+      .listTaskRecords()
+      .filter((record) => record.runId === candidate.runId);
+    const task = tasks[0];
+    if (
+      tasks.length !== 1 ||
+      !task ||
+      task.taskId !== candidate.taskId ||
+      !this.acceptsTask(task, candidate.parentState) ||
+      !this.shouldReconcileTask(task, now) ||
+      (child?.completionTaskId && child.completionTaskId !== candidate.taskId)
+    ) {
+      return undefined;
+    }
+    const assignment = child ?? readNativeTaskAssignment(task);
+    if (!assignment) {
+      return undefined;
+    }
+    return {
+      task,
+      historyOwner: readCodexNativeSubagentHistoryOwner(task.detail),
+      assignment,
+      terminal:
+        task.status === "succeeded" || task.status === "failed" || task.status === "cancelled",
+    };
   }
 
   isCurrentTask(

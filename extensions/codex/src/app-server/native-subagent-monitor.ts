@@ -2266,34 +2266,14 @@ class Monitor {
     if (this.disposed || this.retiredParentStates.has(candidate.parentState)) {
       return;
     }
-    const runId = candidate.runId;
-    const tasks = candidate.taskRuntime
-      .listTaskRecords()
-      .filter((record) => record.runId === runId);
-    const task = tasks[0];
-    if (
-      tasks.length !== 1 ||
-      !task ||
-      task.taskId !== candidate.taskId ||
-      !this.historyRecovery.acceptsTask(task, candidate.parentState) ||
-      !this.historyRecovery.shouldReconcileTask(task, this.now())
-    ) {
-      return;
-    }
-    const historyOwner = readCodexNativeSubagentHistoryOwner(task.detail);
     const childBeforeRead = this.childStates.get(candidate.runId);
-    if (
-      childBeforeRead?.completionTaskId &&
-      childBeforeRead.completionTaskId !== candidate.taskId
-    ) {
+    const prepared = this.historyRecovery.prepareTaskRead(candidate, childBeforeRead, this.now());
+    if (!prepared) {
       return;
     }
-    let assignment = childBeforeRead ?? readNativeTaskAssignment(task);
-    if (!assignment) {
-      return;
-    }
-    candidate.terminal =
-      task.status === "succeeded" || task.status === "failed" || task.status === "cancelled";
+    const { task, historyOwner } = prepared;
+    let { assignment } = prepared;
+    candidate.terminal = prepared.terminal;
     candidate.nativeTurnId = assignment.nativeTurnId;
     const statusRead = this.recovery.retainThreadStatusRevision(assignment.childThreadId);
     try {

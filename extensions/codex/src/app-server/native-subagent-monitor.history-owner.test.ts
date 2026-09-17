@@ -24,6 +24,7 @@ const cases: Array<{
   stored: CodexNativeSubagentHistoryOwner | undefined;
   current: CodexNativeSubagentHistoryOwner | undefined;
   allow: boolean;
+  allowInspection?: boolean;
   terminal?: boolean;
 }> = [
   { name: "native parent rotation", stored: original, current, allow: true },
@@ -32,6 +33,7 @@ const cases: Array<{
     stored: original,
     current: { ...current, sessionId: "adopted-session" },
     allow: false,
+    allowInspection: true,
   },
   {
     name: "in-place reset preserving session id",
@@ -88,6 +90,7 @@ const cases: Array<{
     stored: original,
     current: { ...current, sessionId: "adopted-session" },
     allow: false,
+    allowInspection: true,
     terminal: true,
   },
   {
@@ -101,7 +104,7 @@ const cases: Array<{
 
 describe("automatic native task history ownership", () => {
   it.each(cases)("scopes recovery for $name", async (scenario) => {
-    const { name, stored, current: owner, allow, terminal } = scenario;
+    const { name, stored, current: owner, allow, allowInspection, terminal } = scenario;
     await withStateDirEnv("codex-history-owner-", async ({ stateDir }) => {
       const requesterSessionKey = "agent:main:history-owner";
       const host = await createAdmittedHostCapabilityTestFixture({
@@ -185,7 +188,7 @@ describe("automatic native task history ownership", () => {
         }
         expect(tasks.listTaskRecords()[0]?.detail).toEqual(originalTask.detail);
         if (stored && !allow) {
-          expect(fixture.request).not.toHaveBeenCalled();
+          expect(fixture.request).toHaveBeenCalledTimes(allowInspection ? 1 : 0);
         }
       } finally {
         await parent.unregister();
