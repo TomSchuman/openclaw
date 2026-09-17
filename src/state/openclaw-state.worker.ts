@@ -30,6 +30,11 @@ import { deferSqlitePostCommitPublication } from "../infra/sqlite-post-commit.js
 import { runSqliteDeferredTransactionSync } from "../infra/sqlite-transaction.js";
 import type { SqliteWorkerBackend } from "../infra/sqlite-worker-contract.js";
 import { getSqliteWorkerStateContext } from "../infra/sqlite-worker-state-context.js";
+import {
+  countRecentTelemetrySessionsInDatabase,
+  persistTelemetrySuccessInDatabase,
+  readTelemetryStateInWorker,
+} from "../infra/telemetry-store.kernel.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
 import { readRemoteModelCatalog } from "../model-catalog/remote-store.js";
 import { isPluginStateWorkerCommand } from "../plugin-state/plugin-state-worker-contract.js";
@@ -194,6 +199,20 @@ function createSharedStateWorkerBackend(
           path: context.databasePath,
           env: getSqliteWorkerStateContext().environment,
         });
+      }
+      if (command.type === "telemetry.readState") {
+        return readTelemetryStateInWorker({
+          path: context.databasePath,
+          env: getSqliteWorkerStateContext().environment,
+        });
+      }
+      if (command.type === "telemetry.countRecentSessions") {
+        return (
+          withExistingOpenClawStateDatabaseReadOnly(
+            ({ db }) => countRecentTelemetrySessionsInDatabase(db, command.input.sinceMs),
+            { path: context.databasePath, env: getSqliteWorkerStateContext().environment },
+          ) ?? 0
+        );
       }
       if (command.type === "subagents.sessionList") {
         return withExistingOpenClawStateDatabaseReadOnly(
@@ -448,6 +467,14 @@ function createSharedStateWorkerBackend(
         return runOpenClawStateWriteTransaction(
           ({ db }) => recordPromotionClaimInDatabase(db, command.input),
           writeOptions,
+        );
+      }
+      if (command.type === "telemetry.persistSuccess") {
+        return runOpenClawStateWriteTransaction(
+          ({ db }) =>
+            persistTelemetrySuccessInDatabase(db, command.input.state, command.input.updatedAtMs),
+          writeOptions,
+          { operationLabel: "config-machine-state.update" },
         );
       }
       if (command.type === "sessionState.recordGoalChange") {
