@@ -29,7 +29,7 @@ import { acquireGatewayLock } from "../../infra/gateway-lock.js";
 import { consumeGatewaySuspendHandoff } from "../../infra/gateway-suspend-coordinator.js";
 import type { GatewayRestartIntent } from "../../infra/restart-intent.js";
 import type { GatewayRestartEmitter } from "../../infra/restart.js";
-import { SqliteIntegrityWorkerInterruptedError } from "../../infra/sqlite-integrity-worker-error.js";
+import { cleanupSnapshotOperations } from "../../infra/sqlite-readonly-location-cleanup.js";
 import { findStartupMaintenanceRequiredError } from "../../infra/startup-maintenance-required.js";
 import { flushLogger } from "../../logging/logger.js";
 import { createSubsystemLogger } from "../../logging/subsystem.js";
@@ -39,7 +39,6 @@ import {
   runOutsideGatewayRootWorkAdmission,
 } from "../../process/gateway-work-admission.js";
 import type { RuntimeEnv } from "../../runtime.js";
-import { AsyncWorkScope } from "../../shared/async-work-scope.js";
 import { drainGlobalSingletonLifecycleState } from "../../shared/global-singleton.js";
 import { createLazyImportLoader } from "../../shared/lazy-promise.js";
 import { createGatewayHostLifecycle } from "./host-lifecycle.js";
@@ -47,6 +46,7 @@ import {
   armShutdownHardExitWatchdog,
   type ShutdownHardExitWatchdog,
 } from "./shutdown-hard-exit.js";
+import { createGatewayStartupOperations } from "./startup-operations.js";
 const gatewayLog = createSubsystemLogger("gateway");
 const LAUNCHD_SUPERVISED_RESTART_EXIT_DELAY_MS = 1500;
 const DEFAULT_RESTART_DRAIN_TIMEOUT_MS = 300_000;
@@ -125,53 +125,6 @@ async function waitForHealthyGatewayChild(
     });
   }
   return false;
-}
-
-function createGatewayStartupOperations(): {
-  run: GatewayStartupOperation;
-  close(): void;
-  cancelledWith(error: unknown): boolean;
-  failedWith(error: unknown): boolean;
-  stopCompletion?: Promise<void>;
-  drain(): Promise<void>;
-} {
-  const scope = new AsyncWorkScope();
-  let failure: { error: unknown } | undefined;
-  // A process-group stop can kill a child before its separate admission owner is cancelled.
-  const cancelledWith = (error: unknown) =>
-    scope.signal.aborted &&
-    (error === scope.signal.reason ||
-      (error instanceof SqliteIntegrityWorkerInterruptedError &&
-        (error.signal === "SIGTERM" || error.signal === "SIGINT")));
-  const run: GatewayStartupOperation = async (operation) => {
-    if (scope.isClosing) {
-      throw scope.signal.reason;
-    }
-    return await scope.track(async () => {
-      try {
-        return await operation(scope.signal);
-      } catch (error) {
-        if (!cancelledWith(error)) {
-          failure ??= { error };
-        }
-        throw error;
-      }
-    });
-  };
-  return {
-    run,
-    close: () => scope.beginClose(),
-    cancelledWith,
-    failedWith: (error: unknown) => failure !== undefined && failure.error === error,
-    async drain() {
-      await scope.drain();
-      // AsyncWorkScope joins descendants with allSettled; failed cleanup must
-      // still make the accepted stop fail rather than certify a clean exit.
-      if (failure) {
-        throw failure.error;
-      }
-    },
-  };
 }
 
 export async function runGatewayLoop(params: {
@@ -316,6 +269,7 @@ export async function runGatewayLoop(params: {
       .catch((error: unknown) => {
         gatewayLog.warn(`managed local service shutdown failed: ${formatErrorMessage(error)}`);
       });
+    await cleanupSnapshotOperations();
     if (hostStopOwner && hostLifecycle !== hostStopOwner) {
       return;
     }
