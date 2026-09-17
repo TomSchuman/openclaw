@@ -42,6 +42,9 @@ type LifecycleFixture = {
   version: number;
   request: {
     canonical: InvokeRequest;
+    withExtensions: InvokeRequest & Record<string, unknown>;
+    legacyParams: Record<string, unknown>;
+    ambiguousParams: Record<string, unknown>;
     invalid: Record<string, unknown>;
   };
   input: {
@@ -77,7 +80,7 @@ describe("node invocation lifecycle contract", () => {
   const fixture = loadFixture();
 
   it("matches the Gateway request producer and node-host consumer", () => {
-    expect(fixture.version).toBe(2);
+    expect(fixture.version).toBe(3);
     const request = fixture.request.canonical;
     expect(
       buildNodeInvokeRequest({
@@ -90,7 +93,24 @@ describe("node invocation lifecycle contract", () => {
       }),
     ).toEqual(request);
     expect(coerceNodeInvokePayload(request)).toEqual(request);
-    expect(coerceNodeInvokePayload({ ...request, unexpected: true })).toEqual(request);
+    expect(fixture.request.withExtensions).toHaveProperty("unexpected", true);
+    expect(coerceNodeInvokePayload(fixture.request.withExtensions)).toEqual(request);
+    expect(coerceNodeInvokePayload(fixture.request.legacyParams)).toEqual({
+      id: "invoke-legacy",
+      nodeId: "node-1",
+      command: "example.status",
+      paramsJSON: '{"verbose":true}',
+      timeoutMs: null,
+      idempotencyKey: null,
+    });
+    expect(coerceNodeInvokePayload(fixture.request.ambiguousParams)).toEqual({
+      id: "invoke-ambiguous",
+      nodeId: "node-1",
+      command: "example.status",
+      paramsJSON: '{"current":true}',
+      timeoutMs: null,
+      idempotencyKey: null,
+    });
     expect(coerceNodeInvokePayload(fixture.request.invalid)).toBeNull();
   });
 
