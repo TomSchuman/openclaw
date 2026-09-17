@@ -1,327 +1,241 @@
 {
   "compactGroupSeconds": {
     "blacksmith": {
-      "agentic-agents-core-auth": 83,
+      "agentic-agents-core-auth": 98,
       "agentic-agents-core-isolated": 35,
       "agentic-agents-core-models": 213,
-      "agentic-agents-core-models#selector-134-bdbd2a37651c#generation-d0542854daaa#part-1-of-3#include-1-230b54ee5fd2": 46,
-      "agentic-agents-core-models#selector-134-bdbd2a37651c#generation-d0542854daaa#part-2-of-3#include-67-89668783f9e0": 67,
-      "agentic-agents-core-models#selector-134-bdbd2a37651c#generation-d0542854daaa#part-3-of-3#include-66-adc0da307284": 94,
-      "agentic-agents-core-runner-cli-1": 8,
+      "agentic-agents-core-models#selector-138-857358452d52#generation-f35fb2a8e5e4#part-1-of-3#include-1-230b54ee5fd2": 43,
+      "agentic-agents-core-models#selector-138-857358452d52#generation-f35fb2a8e5e4#part-2-of-3#include-69-2b55aee87c12": 101,
+      "agentic-agents-core-models#selector-138-857358452d52#generation-f35fb2a8e5e4#part-3-of-3#include-68-f3d457454ac2": 106,
+      "agentic-agents-core-runner-cli-1": 12,
       "agentic-agents-core-runner-cli-2": 28,
       "agentic-agents-core-runner-cli-3": 15,
-      "agentic-agents-core-runner-commands": 44,
-      "agentic-agents-core-runner-embedded": 24,
-      "agentic-agents-core-runner-sessions": 19,
-      "agentic-agents-core-runtime": 254,
-      "agentic-agents-core-runtime#selector-319-09124a565c0e#generation-f574037c7a78#part-1-of-3#include-2-81d1fa5552c6": 8,
-      "agentic-agents-core-runtime#selector-319-09124a565c0e#generation-f574037c7a78#part-2-of-3#include-159-b0e5dd1b53e9": 134,
-      "agentic-agents-core-runtime#selector-319-09124a565c0e#generation-f574037c7a78#part-3-of-3#include-158-d8febead43ae": 128,
-      "agentic-agents-core-runtime#selector-320-4fa37dc52d90#generation-d59666905b5e#part-1-of-3#include-2-81d1fa5552c6": 10,
-      "agentic-agents-core-runtime#selector-320-4fa37dc52d90#generation-d59666905b5e#part-2-of-3#include-159-c553283833ae": 112,
-      "agentic-agents-core-runtime#selector-320-4fa37dc52d90#generation-d59666905b5e#part-3-of-3#include-159-652f3d4ece1f": 139,
+      "agentic-agents-core-runner-commands": 140,
+      "agentic-agents-core-runner-commands#selector-21-0feda0c60a07#generation-73a8ef7e308e#part-1-of-2#include-1-7933a428c1d9": 66,
+      "agentic-agents-core-runner-commands#selector-21-0feda0c60a07#generation-73a8ef7e308e#part-2-of-2#include-20-e5e879348e6a": 75,
+      "agentic-agents-core-runner-embedded": 41,
+      "agentic-agents-core-runner-sessions": 28,
+      "agentic-agents-core-runtime": 293,
+      "agentic-agents-core-runtime#selector-328-bb6b311a0da6#generation-e4c4aa85331a#part-1-of-3#include-2-81d1fa5552c6": 11,
+      "agentic-agents-core-runtime#selector-328-bb6b311a0da6#generation-e4c4aa85331a#part-2-of-3#include-163-60e1768de093": 149,
+      "agentic-agents-core-runtime#selector-328-bb6b311a0da6#generation-e4c4aa85331a#part-3-of-3#include-163-4a1ba1e19e03": 142,
+      "agentic-agents-core-spawn-production-boundary": 40,
       "agentic-agents-core-subagents": 20,
       "agentic-agents-core-tools": 186,
+      "agentic-agents-core-tools#selector-166-2cd0582a3a8c#generation-2e9376119ed0#part-1-of-2#include-83-27745afed9d6": 88,
+      "agentic-agents-core-tools#selector-166-2cd0582a3a8c#generation-2e9376119ed0#part-2-of-2#include-83-d3f629ff4fc3": 109,
+      "agentic-agents-core-tools#selector-167-3424859cdc77#generation-cadbd5d14221#part-1-of-2#include-84-3c30f9e0d798": 83,
+      "agentic-agents-core-tools#selector-167-3424859cdc77#generation-cadbd5d14221#part-2-of-2#include-83-e1a0d10f670e": 109,
       "agentic-agents-embedded-base-1": 133,
       "agentic-agents-embedded-base-2": 78,
-      "agentic-agents-embedded-base-3": 162,
+      "agentic-agents-embedded-base-3": 198,
       "agentic-agents-embedded-incomplete-turn": 10,
       "agentic-agents-embedded-overflow-compaction": 38,
-      "agentic-agents-embedded-run": 141,
+      "agentic-agents-embedded-run": 172,
       "agentic-agents-support": 804,
-      "agentic-agents-support#selector-336-8ea207c3f841#generation-d74aa0628345#part-1-of-4#include-83-41db63b3251f": 185,
-      "agentic-agents-support#selector-336-8ea207c3f841#generation-d74aa0628345#part-2-of-4#include-83-06c5925fb66d": 200,
-      "agentic-agents-support#selector-336-8ea207c3f841#generation-d74aa0628345#part-3-of-4#include-85-66975bc19fc6": 262,
-      "agentic-agents-support#selector-336-8ea207c3f841#generation-d74aa0628345#part-4-of-4#include-85-3e19999a62da": 186,
-      "agentic-agents-tools": 147,
+      "agentic-agents-support#selector-341-c02f2b3f640e#generation-28058bcdaffd#part-1-of-5#include-69-78924c23d57b": 170,
+      "agentic-agents-support#selector-341-c02f2b3f640e#generation-28058bcdaffd#part-2-of-5#include-67-ec2487932b89": 193,
+      "agentic-agents-support#selector-341-c02f2b3f640e#generation-28058bcdaffd#part-3-of-5#include-67-33b0e1809fb8": 223,
+      "agentic-agents-support#selector-341-c02f2b3f640e#generation-28058bcdaffd#part-4-of-5#include-69-2f50c976b83d": 150,
+      "agentic-agents-support#selector-341-c02f2b3f640e#generation-28058bcdaffd#part-5-of-5#include-69-fcc9bd49951c": 152,
+      "agentic-agents-tools": 200,
       "agentic-cli": 595,
-      "agentic-cli-process#selector-19-4f46963f9c67#generation-5f1ca4b9056b#part-1-of-5#include-1-479c1a04519b": 115,
-      "agentic-cli-process#selector-19-4f46963f9c67#generation-5f1ca4b9056b#part-2-of-5#include-4-d908085490cb": 32,
-      "agentic-cli-process#selector-19-4f46963f9c67#generation-5f1ca4b9056b#part-3-of-5#include-4-99ee0ae1a0e9": 117,
-      "agentic-cli-process#selector-19-4f46963f9c67#generation-5f1ca4b9056b#part-4-of-5#include-4-013265b2ead9": 72,
-      "agentic-cli-process#selector-19-4f46963f9c67#generation-5f1ca4b9056b#part-5-of-5#include-6-ead538ecd745": 156,
-      "agentic-cli-process#selector-44-c896d15834af#generation-9971083e0f85#part-4-of-7#include-5-0a875c70dd51": 89,
+      "agentic-cli-process": 1074,
+      "agentic-cli-process#selector-46-0a63fd6b75fd#generation-90d0e4fae0d8#part-1-of-7#include-7-ee19a542f5a1": 246,
+      "agentic-cli-process#selector-46-0a63fd6b75fd#generation-90d0e4fae0d8#part-2-of-7#include-1-a9cb6450721e": 29,
+      "agentic-cli-process#selector-46-0a63fd6b75fd#generation-90d0e4fae0d8#part-3-of-7#include-1-479c1a04519b": 65,
+      "agentic-cli-process#selector-46-0a63fd6b75fd#generation-90d0e4fae0d8#part-4-of-7#include-5-084dd0cdfde7": 111,
+      "agentic-cli-process#selector-46-0a63fd6b75fd#generation-90d0e4fae0d8#part-5-of-7#include-7-465bbd0d2765": 123,
+      "agentic-cli-process#selector-46-0a63fd6b75fd#generation-90d0e4fae0d8#part-6-of-7#include-12-9d72ce55ef74": 200,
+      "agentic-cli-process#selector-46-0a63fd6b75fd#generation-90d0e4fae0d8#part-7-of-7#include-13-456bd0a5a83d": 243,
       "agentic-command-support": 57,
-      "agentic-commands-agent-channel": 145,
-      "agentic-commands-doctor": 305,
-      "agentic-commands-doctor-auth": 33,
-      "agentic-commands-doctor-config-state": 615,
-      "agentic-commands-doctor-config-state#selector-40-afc14cbc6b98#generation-759fbe0d0668#part-1-of-2#include-3-a73e5c103965": 98,
-      "agentic-commands-doctor-config-state#selector-40-afc14cbc6b98#generation-759fbe0d0668#part-2-of-2#include-37-f29af7b30e0b": 505,
-      "agentic-commands-doctor-device": 6,
-      "agentic-commands-doctor-gateway": 11,
-      "agentic-commands-doctor-platform": 5,
-      "agentic-commands-doctor-plugins-tools": 131,
-      "agentic-commands-doctor-plugins-tools#selector-23-9947989a4465#generation-e063bfd54b6c#part-1-of-2#include-1-b062f204726d": 68,
+      "agentic-commands-agent-channel": 229,
+      "agentic-commands-doctor": 363,
+      "agentic-commands-doctor#selector-59-859add973156#generation-e6f441cd15d1#part-1-of-2#include-30-5f13d5119ae1": 165,
+      "agentic-commands-doctor#selector-59-859add973156#generation-e6f441cd15d1#part-2-of-2#include-29-5361dd99eb87": 210,
+      "agentic-commands-doctor-auth": 54,
+      "agentic-commands-doctor-config-state": 773,
+      "agentic-commands-doctor-config-state#selector-40-afc14cbc6b98#generation-6d03cd0d91a8#part-1-of-5#include-3-a73e5c103965": 111,
+      "agentic-commands-doctor-config-state#selector-40-afc14cbc6b98#generation-6d03cd0d91a8#part-2-of-5#include-10-2368776d07b1": 142,
+      "agentic-commands-doctor-config-state#selector-40-afc14cbc6b98#generation-6d03cd0d91a8#part-3-of-5#include-9-709dd8268c04": 177,
+      "agentic-commands-doctor-config-state#selector-40-afc14cbc6b98#generation-6d03cd0d91a8#part-4-of-5#include-9-d92f18941e59": 118,
+      "agentic-commands-doctor-config-state#selector-40-afc14cbc6b98#generation-6d03cd0d91a8#part-5-of-5#include-9-ce3d622c8f7d": 231,
+      "agentic-commands-doctor-device": 11,
+      "agentic-commands-doctor-gateway": 15,
+      "agentic-commands-doctor-platform": 7,
+      "agentic-commands-doctor-plugins-tools": 164,
+      "agentic-commands-doctor-plugins-tools#selector-23-9947989a4465#generation-e063bfd54b6c#part-1-of-2#include-1-b062f204726d": 91,
       "agentic-commands-doctor-plugins-tools#selector-23-9947989a4465#generation-e063bfd54b6c#part-2-of-2#include-22-c1b7a3d6894a": 67,
-      "agentic-commands-doctor-sessions-cron": 175,
-      "agentic-commands-doctor-sessions-cron-memory": 116,
-      "agentic-commands-doctor-sessions-cron-sqlite": 151,
-      "agentic-commands-doctor-shared": 99,
+      "agentic-commands-doctor-sessions-cron": 225,
+      "agentic-commands-doctor-sessions-cron#selector-25-ef0bc5cde541#generation-29f74e2631eb#part-1-of-2#include-13-756d2d3b75fc": 84,
+      "agentic-commands-doctor-sessions-cron#selector-25-ef0bc5cde541#generation-29f74e2631eb#part-2-of-2#include-12-c25b39d26259": 142,
+      "agentic-commands-doctor-sessions-cron-memory": 80,
+      "agentic-commands-doctor-sessions-cron-sqlite": 213,
+      "agentic-commands-doctor-shared": 120,
       "agentic-commands-doctor-whatsapp": 2,
-      "agentic-commands-doctor-workspace": 8,
+      "agentic-commands-doctor-workspace": 10,
       "agentic-commands-models": 124,
       "agentic-commands-onboard-config": 104,
       "agentic-commands-status-tools": 247,
-      "agentic-control-plane-agent-chat": 440,
-      "agentic-control-plane-agent-chat#selector-73-ab7cb0d709e0#generation-3eba05da5bbd#part-1-of-2#include-38-8f14d0a4f87f": 200,
-      "agentic-control-plane-agent-chat#selector-73-ab7cb0d709e0#generation-3eba05da5bbd#part-2-of-2#include-35-be552593fcbd": 244,
-      "agentic-control-plane-auth-node": 194,
+      "agentic-commands-status-tools#selector-117-02b3a4046b21#generation-2e8cdadb7ed1#part-1-of-2#include-59-9538da18d7d6": 71,
+      "agentic-commands-status-tools#selector-117-02b3a4046b21#generation-2e8cdadb7ed1#part-2-of-2#include-58-8aeea66daeb5": 167,
+      "agentic-control-plane-agent-chat": 571,
+      "agentic-control-plane-agent-chat#selector-73-ab7cb0d709e0#generation-7f5845652818#part-1-of-3#include-26-972ce8d07e03": 197,
+      "agentic-control-plane-agent-chat#selector-73-ab7cb0d709e0#generation-7f5845652818#part-2-of-3#include-25-82cebc837d10": 164,
+      "agentic-control-plane-agent-chat#selector-73-ab7cb0d709e0#generation-7f5845652818#part-3-of-3#include-22-daefc99eb0d2": 200,
+      "agentic-control-plane-auth-node": 236,
       "agentic-control-plane-auth-node#selector-53-69010aca0260#generation-fbb7aaeb9618#part-1-of-2#include-27-a0d11545abd6": 98,
-      "agentic-control-plane-auth-node#selector-53-69010aca0260#generation-fbb7aaeb9618#part-2-of-2#include-26-c8d2d3c92686": 88,
+      "agentic-control-plane-auth-node#selector-53-69010aca0260#generation-fbb7aaeb9618#part-2-of-2#include-26-c8d2d3c92686": 130,
       "agentic-control-plane-http-models": 93,
-      "agentic-control-plane-http-plugin-ws": 90,
-      "agentic-control-plane-runtime": 26,
+      "agentic-control-plane-http-plugin-ws": 114,
+      "agentic-control-plane-runtime": 47,
       "agentic-control-plane-runtime-config": 126,
-      "agentic-control-plane-runtime-cron": 191,
-      "agentic-control-plane-runtime-server": 222,
-      "agentic-control-plane-runtime-server#selector-86-f31e748daa74#generation-213190f0c172#part-1-of-2#include-1-f8c1df2aaf3e": 14,
-      "agentic-control-plane-runtime-server#selector-86-f31e748daa74#generation-213190f0c172#part-2-of-2#include-85-6a80f03b01ef": 205,
-      "agentic-control-plane-runtime-shared-token": 12,
-      "agentic-control-plane-runtime-state": 142,
-      "agentic-control-plane-runtime-ui-tools": 11,
+      "agentic-control-plane-runtime-cron": 230,
+      "agentic-control-plane-runtime-cron#selector-13-f5b7dd10778e#generation-bc402d081865#part-1-of-2#include-7-c2f50229c5dc": 60,
+      "agentic-control-plane-runtime-cron#selector-13-f5b7dd10778e#generation-bc402d081865#part-2-of-2#include-6-7b5506cca8e9": 166,
+      "agentic-control-plane-runtime-server": 304,
+      "agentic-control-plane-runtime-server#selector-88-eee2495bfd0c#generation-31497bf54327#part-1-of-3#include-1-f8c1df2aaf3e": 40,
+      "agentic-control-plane-runtime-server#selector-88-eee2495bfd0c#generation-31497bf54327#part-2-of-3#include-44-068faba06430": 146,
+      "agentic-control-plane-runtime-server#selector-88-eee2495bfd0c#generation-31497bf54327#part-3-of-3#include-43-334617b9baf8": 105,
+      "agentic-control-plane-runtime-shared-token": 32,
+      "agentic-control-plane-runtime-state": 196,
+      "agentic-control-plane-runtime-ui-tools": 30,
       "agentic-control-plane-startup-config": 10,
-      "agentic-control-plane-startup-core": 60,
-      "agentic-control-plane-startup-health-runtime": 39,
+      "agentic-control-plane-startup-core": 80,
+      "agentic-control-plane-startup-health-runtime": 50,
       "agentic-control-plane-startup-restart-close": 48,
       "agentic-gateway-core-1": 578,
-      "agentic-gateway-core-1#selector-269-be6293f4b6fa#generation-ff3051d3b2c9#part-1-of-2#include-128-6db2f96c77d3": 345,
-      "agentic-gateway-core-1#selector-269-be6293f4b6fa#generation-ff3051d3b2c9#part-2-of-2#include-141-52ef9c5d7768": 222,
-      "agentic-gateway-core-2": 491,
-      "agentic-gateway-core-2#selector-274-d646fdb18ac2#generation-e0fd3a83432d#part-1-of-2#include-133-2ab8912b7ee4": 269,
-      "agentic-gateway-core-2#selector-274-d646fdb18ac2#generation-e0fd3a83432d#part-2-of-2#include-141-f3f399a15244": 220,
-      "agentic-gateway-core-3": 382,
-      "agentic-gateway-core-runtime": 22,
-      "agentic-gateway-methods": 605,
-      "agentic-gateway-methods#selector-341-44419802692e#generation-d130623a3258#part-1-of-3#include-1-ccb1c00d89ea": 33,
-      "agentic-gateway-methods#selector-341-44419802692e#generation-d130623a3258#part-2-of-3#include-170-d3dfb9068981": 301,
-      "agentic-gateway-methods#selector-341-44419802692e#generation-d130623a3258#part-3-of-3#include-170-429c093292d9": 229,
-      "agentic-gateway-server-isolated": 30,
+      "agentic-gateway-core-1#selector-272-c2ed0b8f1d53#generation-f6c2e382ef30#part-1-of-4#include-58-5fd4382d1758": 128,
+      "agentic-gateway-core-1#selector-272-c2ed0b8f1d53#generation-f6c2e382ef30#part-2-of-4#include-72-803aff0f44a5": 183,
+      "agentic-gateway-core-1#selector-272-c2ed0b8f1d53#generation-f6c2e382ef30#part-3-of-4#include-71-e18ec97e34fe": 185,
+      "agentic-gateway-core-1#selector-272-c2ed0b8f1d53#generation-f6c2e382ef30#part-4-of-4#include-71-646a743f5e85": 110,
+      "agentic-gateway-core-2": 571,
+      "agentic-gateway-core-2#selector-277-25bc94c16bfb#generation-fe22d13ae1a7#part-1-of-3#include-87-873cb1236d3b": 246,
+      "agentic-gateway-core-2#selector-277-25bc94c16bfb#generation-fe22d13ae1a7#part-2-of-3#include-95-b493a4fd33bf": 140,
+      "agentic-gateway-core-2#selector-277-25bc94c16bfb#generation-fe22d13ae1a7#part-3-of-3#include-95-6daabcd67a20": 170,
+      "agentic-gateway-core-3": 588,
+      "agentic-gateway-core-3#selector-278-13b465611502#generation-6eb2382e9d19#part-1-of-3#include-88-41bce97755a5": 166,
+      "agentic-gateway-core-3#selector-278-13b465611502#generation-6eb2382e9d19#part-2-of-3#include-95-776d350193e9": 184,
+      "agentic-gateway-core-3#selector-278-13b465611502#generation-6eb2382e9d19#part-3-of-3#include-95-dd94094e719a": 217,
+      "agentic-gateway-core-runtime": 81,
+      "agentic-gateway-methods": 747,
+      "agentic-gateway-methods#selector-345-f918ec106bc4#generation-284aef2328cd#part-1-of-5#include-1-ccb1c00d89ea": 31,
+      "agentic-gateway-methods#selector-345-f918ec106bc4#generation-284aef2328cd#part-2-of-5#include-86-46f2afe08deb": 174,
+      "agentic-gateway-methods#selector-345-f918ec106bc4#generation-284aef2328cd#part-3-of-5#include-86-a34864b6331e": 141,
+      "agentic-gateway-methods#selector-345-f918ec106bc4#generation-284aef2328cd#part-4-of-5#include-86-e58257a1465e": 157,
+      "agentic-gateway-methods#selector-345-f918ec106bc4#generation-284aef2328cd#part-5-of-5#include-86-379da5b11f00": 220,
+      "agentic-gateway-server-isolated": 963,
+      "agentic-gateway-server-isolated#selector-48-8f420287bbb2#generation-e6b76c75680e#part-1-of-2#include-4-eec2630c7ddc": 550,
+      "agentic-gateway-server-isolated#selector-48-8f420287bbb2#generation-e6b76c75680e#part-2-of-2#include-44-2ac1fd839c7a": 471,
       "agentic-plugin-sdk": 83,
       "agentic-plugin-sdk#selector-111-2dd704bc314c#generation-5deca29c02ff#part-1-of-2#include-1-4d9bced7fb6c": 7,
       "agentic-plugin-sdk#selector-111-2dd704bc314c#generation-5deca29c02ff#part-2-of-2#include-110-2f4ecc577f40": 75,
-      "auto-reply-core-top-level": 49,
+      "auto-reply-core-top-level": 70,
       "auto-reply-reply-agent-runner": 290,
       "auto-reply-reply-agent-runner#selector-64-4fa606ca5c0a#generation-5c6132978db2#part-1-of-2#include-32-86b20a623092": 160,
       "auto-reply-reply-agent-runner#selector-64-4fa606ca5c0a#generation-5c6132978db2#part-2-of-2#include-32-1bc911b9fcb0": 130,
       "auto-reply-reply-commands-1": 54,
-      "auto-reply-reply-commands-2": 35,
+      "auto-reply-reply-commands-2": 48,
       "auto-reply-reply-commands-3": 27,
-      "auto-reply-reply-dispatch": 149,
-      "auto-reply-reply-dispatch-core": 12,
+      "auto-reply-reply-dispatch": 180,
+      "auto-reply-reply-dispatch-core": 14,
       "auto-reply-reply-dispatch-delivery": 28,
-      "auto-reply-reply-dispatch-lifecycle": 12,
-      "auto-reply-reply-session": 92,
+      "auto-reply-reply-dispatch-lifecycle": 17,
+      "auto-reply-reply-session": 118,
       "auto-reply-reply-state-routing": 70,
-      "core-runtime-config": 847,
-      "core-runtime-config#selector-383-a18944119b58#generation-78217e496726#part-1-of-3#include-3-5dbb152e5b0e": 383,
-      "core-runtime-config#selector-383-a18944119b58#generation-78217e496726#part-2-of-3#include-190-8e76654b6196": 180,
-      "core-runtime-config#selector-383-a18944119b58#generation-78217e496726#part-3-of-3#include-190-d33e509749e6": 246,
-      "core-runtime-config#selector-384-34096d6ac04b#generation-0b73a63ec93a#part-1-of-3#include-3-5dbb152e5b0e": 357,
-      "core-runtime-config#selector-384-34096d6ac04b#generation-0b73a63ec93a#part-2-of-3#include-191-6930f83aa66c": 278,
-      "core-runtime-config#selector-384-34096d6ac04b#generation-0b73a63ec93a#part-3-of-3#include-190-fa1831e3debb": 314,
-      "core-runtime-cron-core": 40,
+      "core-runtime-config": 1056,
+      "core-runtime-config#selector-393-dc1243d548bb#generation-60368597438a#part-1-of-6#include-3-5dbb152e5b0e": 457,
+      "core-runtime-config#selector-393-dc1243d548bb#generation-60368597438a#part-2-of-6#include-78-f5238a2271bb": 178,
+      "core-runtime-config#selector-393-dc1243d548bb#generation-60368597438a#part-3-of-6#include-78-07a0d92f7025": 98,
+      "core-runtime-config#selector-393-dc1243d548bb#generation-60368597438a#part-4-of-6#include-78-2bf48c59f746": 125,
+      "core-runtime-config#selector-393-dc1243d548bb#generation-60368597438a#part-5-of-6#include-78-473ef6672c49": 84,
+      "core-runtime-config#selector-393-dc1243d548bb#generation-60368597438a#part-6-of-6#include-78-a2a0b51035ae": 98,
+      "core-runtime-cron-core": 65,
       "core-runtime-cron-isolated-agent": 177,
       "core-runtime-cron-isolated-agent#selector-61-a184deace13b#generation-c63bc6bc6575#part-1-of-2#include-31-d1143294f4a3": 96,
       "core-runtime-cron-isolated-agent#selector-61-a184deace13b#generation-c63bc6bc6575#part-2-of-2#include-30-5b1ce67320dc": 80,
-      "core-runtime-cron-service": 274,
-      "core-runtime-hooks": 31,
-      "core-runtime-infra-approval-exec": 23,
+      "core-runtime-cron-service": 356,
+      "core-runtime-cron-service#selector-111-bc774cc027c0#generation-e49e641036d1#part-1-of-2#include-56-7ecb3726bf51": 146,
+      "core-runtime-cron-service#selector-111-bc774cc027c0#generation-e49e641036d1#part-2-of-2#include-55-48ddd87712e9": 202,
+      "core-runtime-hooks": 47,
+      "core-runtime-infra-approval-exec": 31,
       "core-runtime-infra-channel-plugin": 20,
       "core-runtime-infra-cli-ui": 8,
-      "core-runtime-infra-core-utils": 6,
+      "core-runtime-infra-core-utils": 7,
       "core-runtime-infra-device": 17,
       "core-runtime-infra-diagnostics-state": 81,
       "core-runtime-infra-env-auth": 9,
       "core-runtime-infra-events-runtime": 10,
-      "core-runtime-infra-file-safety": 4,
+      "core-runtime-infra-file-safety": 5,
       "core-runtime-infra-files-commands": 15,
-      "core-runtime-infra-gateway-lock-argv": 9,
-      "core-runtime-infra-gateway-processes": 2,
+      "core-runtime-infra-gateway-lock-argv": 11,
+      "core-runtime-infra-gateway-processes": 3,
       "core-runtime-infra-gateway-watch": 3,
       "core-runtime-infra-heartbeat-core": 4,
-      "core-runtime-infra-heartbeat-runner": 228,
-      "core-runtime-infra-misc": 82,
+      "core-runtime-infra-heartbeat-runner": 274,
+      "core-runtime-infra-heartbeat-runner#selector-30-c5b6ab6e0a99#generation-0ca978718390#part-1-of-2#include-15-8458b3e395e7": 110,
+      "core-runtime-infra-heartbeat-runner#selector-30-c5b6ab6e0a99#generation-0ca978718390#part-2-of-2#include-15-d1b536c1ac19": 165,
+      "core-runtime-infra-misc": 130,
       "core-runtime-infra-misc-dedupe-disk": 2,
       "core-runtime-infra-misc-os": 2,
       "core-runtime-infra-misc-values": 2,
       "core-runtime-infra-net-install": 47,
       "core-runtime-infra-network-node": 13,
       "core-runtime-infra-network-platform": 18,
-      "core-runtime-infra-outbound-actions": 64,
+      "core-runtime-infra-outbound-actions": 54,
       "core-runtime-infra-outbound-core": 163,
-      "core-runtime-infra-process": 71,
-      "core-runtime-infra-provider-push": 20,
+      "core-runtime-infra-process": 125,
+      "core-runtime-infra-provider-push": 25,
       "core-runtime-infra-repo-tooling": 19,
-      "core-runtime-infra-storage-state": 1403,
-      "core-runtime-infra-storage-state#selector-248-0681de134ad4#generation-f637f3e3f9ea#part-1-of-3#include-1-4f8fa8f01120": 59,
-      "core-runtime-infra-storage-state#selector-248-0681de134ad4#generation-f637f3e3f9ea#part-2-of-3#include-123-450efa03c466": 735,
-      "core-runtime-infra-storage-state#selector-248-0681de134ad4#generation-f637f3e3f9ea#part-3-of-3#include-124-cc26fbe71123": 624,
-      "core-runtime-infra-system-runtime": 693,
-      "core-runtime-infra-system-runtime#selector-146-9ae687ecb825#generation-50ff7af0c96e#part-1-of-2#include-2-dc9c8867ef88": 324,
-      "core-runtime-infra-system-runtime#selector-146-9ae687ecb825#generation-50ff7af0c96e#part-2-of-2#include-144-a60b0d44ab14": 367,
+      "core-runtime-infra-storage-state": 1878,
+      "core-runtime-infra-storage-state#selector-257-027bf9b700ea#generation-253205575362#part-1-of-10#include-1-4f8fa8f01120": 54,
+      "core-runtime-infra-storage-state#selector-257-027bf9b700ea#generation-253205575362#part-10-of-10#include-30-0df35cfd2de6": 154,
+      "core-runtime-infra-storage-state#selector-257-027bf9b700ea#generation-253205575362#part-2-of-10#include-23-95566958f33b": 184,
+      "core-runtime-infra-storage-state#selector-257-027bf9b700ea#generation-253205575362#part-3-of-10#include-24-f493bfc853d3": 263,
+      "core-runtime-infra-storage-state#selector-257-027bf9b700ea#generation-253205575362#part-4-of-10#include-28-463cfc32a7b3": 179,
+      "core-runtime-infra-storage-state#selector-257-027bf9b700ea#generation-253205575362#part-5-of-10#include-29-54e928238a23": 252,
+      "core-runtime-infra-storage-state#selector-257-027bf9b700ea#generation-253205575362#part-6-of-10#include-30-fe315fa72726": 192,
+      "core-runtime-infra-storage-state#selector-257-027bf9b700ea#generation-253205575362#part-7-of-10#include-31-634a6565b385": 200,
+      "core-runtime-infra-storage-state#selector-257-027bf9b700ea#generation-253205575362#part-8-of-10#include-31-f1756c79ae6c": 147,
+      "core-runtime-infra-storage-state#selector-257-027bf9b700ea#generation-253205575362#part-9-of-10#include-30-39e3372700b7": 225,
+      "core-runtime-infra-system-runtime": 868,
+      "core-runtime-infra-system-runtime#selector-148-ae0006410921#generation-cad571f81501#part-1-of-5#include-2-dc9c8867ef88": 395,
+      "core-runtime-infra-system-runtime#selector-148-ae0006410921#generation-cad571f81501#part-2-of-5#include-37-c04ce12a7d8a": 111,
+      "core-runtime-infra-system-runtime#selector-148-ae0006410921#generation-cad571f81501#part-3-of-5#include-37-fec67eaaa2b8": 130,
+      "core-runtime-infra-system-runtime#selector-148-ae0006410921#generation-cad571f81501#part-4-of-5#include-36-bc6fb1c8be1b": 115,
+      "core-runtime-infra-system-runtime#selector-148-ae0006410921#generation-cad571f81501#part-5-of-5#include-36-26fae313883d": 115,
       "core-runtime-media-ui-1": 179,
+      "core-runtime-media-ui-1#selector-379-3be44261ee32#generation-762ab70559c6#part-1-of-2#include-185-0a7aa0b75877": 108,
+      "core-runtime-media-ui-1#selector-379-3be44261ee32#generation-762ab70559c6#part-2-of-2#include-194-ed11e7ba9225": 62,
+      "core-runtime-media-ui-1#selector-379-52868b0abb4d#generation-e9e6c920dc4a#part-1-of-2#include-185-06a0b55ede2e": 113,
+      "core-runtime-media-ui-1#selector-379-52868b0abb4d#generation-e9e6c920dc4a#part-2-of-2#include-194-28ab32aa0629": 88,
       "core-runtime-media-ui-2": 166,
-      "core-runtime-media-ui-3": 134,
-      "core-runtime-media-ui-support": 108,
+      "core-runtime-media-ui-3": 157,
+      "core-runtime-media-ui-support": 163,
       "core-runtime-secrets": 51,
       "core-runtime-shared": 73,
-      "core-unit-fast-1": 89,
+      "core-unit-fast-1": 135,
+      "core-unit-fast-1#selector-728-3e584f195a98#generation-38aa45e226ab#part-1-of-2#include-2-7aac2c6cc462": 10,
+      "core-unit-fast-1#selector-728-3e584f195a98#generation-38aa45e226ab#part-2-of-2#include-726-8c402ff567b6": 124,
       "core-unit-fast-2": 106,
-      "core-unit-fast-2#selector-717-3dc4c751389c#generation-6f56693ed200#part-1-of-2#include-2-7aac2c6cc462": 9,
-      "core-unit-fast-2#selector-717-3dc4c751389c#generation-6f56693ed200#part-2-of-2#include-715-b43788617712": 97,
-      "core-unit-fast-2#selector-718-1e856297311d#generation-860e5c3340ce#part-1-of-2#include-2-7aac2c6cc462": 8,
-      "core-unit-fast-2#selector-718-1e856297311d#generation-860e5c3340ce#part-2-of-2#include-716-f06e4d075f27": 95,
       "core-unit-fast-fake-timers": 24,
-      "core-unit-fast-isolated": 139,
-      "core-unit-fast-isolated#selector-132-6bef059cfe2f#generation-f04d537c41a8#part-1-of-2#include-66-0354d07c2777": 55,
-      "core-unit-fast-isolated#selector-132-6bef059cfe2f#generation-f04d537c41a8#part-2-of-2#include-66-5191df32b86c": 73,
-      "core-unit-fast-isolated#selector-132-b6fd6321455e#generation-47f3131fc7d5#part-1-of-2#include-66-048ca89b0f70": 65,
-      "core-unit-fast-isolated#selector-132-b6fd6321455e#generation-47f3131fc7d5#part-2-of-2#include-66-8be9bcf68a2e": 81,
-      "core-unit-src-security-1": 190,
-      "core-unit-src-security-1#selector-218-178cc4d122fb#generation-63b4930a01e9#part-1-of-2#include-1-000a2d207cbf": 15,
-      "core-unit-src-security-1#selector-218-178cc4d122fb#generation-63b4930a01e9#part-2-of-2#include-217-6f5a0efbcad9": 159,
-      "core-unit-src-security-2": 317,
-      "core-unit-src-security-3": 199,
+      "core-unit-fast-isolated": 179,
+      "core-unit-fast-isolated#selector-137-0c1b68926332#generation-dc8c82f8d3ea#part-1-of-2#include-69-de1b3591b3f3": 88,
+      "core-unit-fast-isolated#selector-137-0c1b68926332#generation-dc8c82f8d3ea#part-2-of-2#include-68-a41f31777121": 89,
+      "core-unit-src-security-1": 256,
+      "core-unit-src-security-1#selector-220-a7989f0ee9b4#generation-14449eb39fa1#part-1-of-2#include-110-30ee8460a00b": 91,
+      "core-unit-src-security-1#selector-220-a7989f0ee9b4#generation-14449eb39fa1#part-2-of-2#include-110-5ffc65cfd1c7": 165,
+      "core-unit-src-security-2": 250,
+      "core-unit-src-security-2#selector-219-400988bf67eb#generation-18ea552aa4d5#part-1-of-2#include-110-24ea121b9757": 119,
+      "core-unit-src-security-2#selector-219-400988bf67eb#generation-18ea552aa4d5#part-2-of-2#include-109-9049fdd2e4f3": 133,
+      "core-unit-src-security-3": 327,
+      "core-unit-src-security-3#selector-219-aa65fb0fc4dc#generation-9498b6494486#part-1-of-3#include-1-000a2d207cbf": 12,
+      "core-unit-src-security-3#selector-219-aa65fb0fc4dc#generation-9498b6494486#part-2-of-3#include-109-0b3095add679": 109,
+      "core-unit-src-security-3#selector-219-aa65fb0fc4dc#generation-9498b6494486#part-3-of-3#include-109-44e4bb72b1e8": 188,
       "core-unit-src-security-support": 16,
       "core-unit-support": 37
     },
     "github": {}
-  },
-  "runtimePlacementTimings": {
-    "blacksmith": [
-      {
-        "configs": [
-          "test/vitest/vitest.agents-core.config.ts"
-        ],
-        "env": {},
-        "includePatterns": [
-          "src/agents/prepared-model-catalog-worker.integration.test.ts"
-        ],
-        "pretestBuildMode": "runtime",
-        "seconds": 41
-      },
-      {
-        "configs": [
-          "test/vitest/vitest.agents-core.config.ts"
-        ],
-        "env": {},
-        "includePatterns": [
-          "src/agents/runtime-plugins.context-engine.integration.test.ts",
-          "src/agents/simple-completion-runtime.plugin-scope.test.ts"
-        ],
-        "pretestBuildMode": "runtime",
-        "seconds": 12
-      },
-      {
-        "configs": [
-          "test/vitest/vitest.commands.config.ts"
-        ],
-        "env": {},
-        "includePatterns": [
-          "src/commands/doctor-config-preflight.process.test.ts",
-          "src/commands/doctor-config-preflight.refusal.process.test.ts",
-          "src/commands/doctor-config-preflight.v17-atomicity.process.test.ts"
-        ],
-        "pretestBuildMode": "runtime",
-        "seconds": 79
-      },
-      {
-        "configs": [
-          "test/vitest/vitest.commands.config.ts"
-        ],
-        "env": {},
-        "includePatterns": [
-          "src/commands/doctor-plugin-install-config.process.test.ts"
-        ],
-        "pretestBuildMode": "runtime",
-        "seconds": 43
-      },
-      {
-        "configs": [
-          "test/vitest/vitest.gateway-server.config.ts"
-        ],
-        "env": {},
-        "includePatterns": [
-          "src/gateway/server-sidecar-retention.test.ts"
-        ],
-        "pretestBuildMode": "runtime",
-        "seconds": 14
-      },
-      {
-        "configs": [
-          "test/vitest/vitest.gateway-server.config.ts"
-        ],
-        "env": {},
-        "includePatterns": [
-          "src/gateway/server.config-patch.test.ts"
-        ],
-        "pretestBuildMode": "runtime",
-        "seconds": 54
-      },
-      {
-        "configs": [
-          "test/vitest/vitest.infra.config.ts"
-        ],
-        "env": {},
-        "includePatterns": [
-          "src/infra/update-candidate-canary.integration.test.ts",
-          "src/infra/update-managed-service-handoff-lifecycle.test.ts"
-        ],
-        "pretestBuildMode": "runtime",
-        "seconds": 265
-      },
-      {
-        "configs": [
-          "test/vitest/vitest.plugin-sdk-light.config.ts",
-          "test/vitest/vitest.plugin-sdk.config.ts"
-        ],
-        "env": {},
-        "includePatterns": [
-          "src/plugin-sdk/channel-entry-contract.lifecycle.test.ts"
-        ],
-        "pretestBuildMode": "runtime",
-        "seconds": 10
-      },
-      {
-        "configs": [
-          "test/vitest/vitest.runtime-config.config.ts"
-        ],
-        "env": {
-          "OPENCLAW_VITEST_MAX_WORKERS": "2"
-        },
-        "includePatterns": [
-          "src/config/config-startup-corpus.test.ts",
-          "src/config/state-startup-corpus.test.ts"
-        ],
-        "pretestBuildMode": "runtime",
-        "seconds": 201
-      },
-      {
-        "configs": [
-          "test/vitest/vitest.unit-fast.config.ts"
-        ],
-        "env": {},
-        "includePatterns": [
-          "src/plugins/setup-registry.migrations.test.ts",
-          "src/plugins/source-checkout-runtime.test.ts"
-        ],
-        "pretestBuildMode": "runtime",
-        "seconds": 12
-      },
-      {
-        "configs": [
-          "test/vitest/vitest.unit-src.config.ts"
-        ],
-        "env": {},
-        "includePatterns": [
-          "src/node-host/linux-node-plugin.integration.test.ts"
-        ],
-        "pretestBuildMode": "runtime",
-        "seconds": 13
-      }
-    ],
-    "github": []
   },
   "repoE2eFileSeconds": {
     "extensions/browser/src/browser/client-fetch.attach-only.e2e.test.ts": 1,
@@ -329,6 +243,7 @@
     "extensions/browser/src/browser/extension-relay/relay-coexistence.e2e.test.ts": 4,
     "extensions/browser/src/browser/pw-ai.e2e.test.ts": 1,
     "extensions/diagnostics-prometheus/src/install-runtime.e2e.test.ts": 17,
+    "extensions/discord/src/voice/manager.e2e.test.ts": 10,
     "extensions/discord/src/voice/voice-runtime.e2e.test.ts": 2,
     "extensions/discord/src/voice/voice-runtime.secret-owner.e2e.test.ts": 1,
     "extensions/ollama/src/node-inference.paired-node.e2e.test.ts": 36,
@@ -338,87 +253,97 @@
     "extensions/qa-lab/src/managed-gateway-service-lifecycle.e2e.test.ts": 17,
     "extensions/qa-lab/src/plugin-subagent-current-requester.e2e.test.ts": 16,
     "extensions/qa-lab/src/plugin-subagent-self-yield-followup.e2e.test.ts": 24,
-    "extensions/telegram/src/bot.media.downloads-media-file-path-no-file-download.e2e.test.ts": 7,
-    "extensions/telegram/src/bot.media.stickers-and-fragments.e2e.test.ts": 2,
+    "extensions/telegram/src/bot.media.downloads-media-file-path-no-file-download.e2e.test.ts": 3,
+    "extensions/telegram/src/bot.media.stickers-and-fragments.e2e.test.ts": 1,
     "extensions/telegram/src/bot.media.warning-topics.e2e.test.ts": 5,
     "extensions/telegram/src/telegram-ingress-coalescing.e2e.test.ts": 3,
     "extensions/whatsapp/src/auto-reply.web-auto-reply.connection-and-logging.e2e.test.ts": 1,
     "packages/ai/src/package.e2e.test.ts": 13,
     "packages/sdk/src/app-sdk-composed-resources.e2e.test.ts": 7,
     "packages/sdk/src/app-sdk-external-boundary.e2e.test.ts": 49,
-    "packages/sdk/src/index.e2e.test.ts": 3,
-    "src/agents/agent-tools.before-tool-call.e2e.test.ts": 2,
-    "src/agents/agent-tools.before-tool-call.integration.e2e.test.ts": 2,
-    "src/agents/bash-tools.exec-gateway-approval.e2e.test.ts": 14,
+    "packages/sdk/src/index.e2e.test.ts": 2,
+    "packages/sdk/src/package.e2e.test.ts": 8,
+    "src/agents/agent-tools.before-tool-call.e2e.test.ts": 1,
+    "src/agents/agent-tools.before-tool-call.integration.e2e.test.ts": 1,
+    "src/agents/bash-tools.exec-gateway-approval.e2e.test.ts": 8,
     "src/agents/bash-tools.process.e2e.test.ts": 3,
     "src/agents/clawrouter-catalog-discovery.e2e.test.ts": 1,
+    "src/agents/cli-runner.bundle-mcp.e2e.test.ts": 1,
     "src/agents/cli-runner.fault-sequences.e2e.test.ts": 5,
-    "src/agents/embedded-agent-runner.e2e.test.ts": 5,
-    "src/agents/embedded-agent-runner.run-embedded-agent.auth-profile-rotation.e2e.test.ts": 11,
+    "src/agents/embedded-agent-runner.e2e.test.ts": 7,
+    "src/agents/embedded-agent-runner.run-embedded-agent.auth-profile-rotation.e2e.test.ts": 8,
     "src/agents/embedded-agent-runner.run-embedded-agent.fault-sequences.e2e.test.ts": 3,
     "src/agents/model-fallback.reply-entry.e2e.test.ts": 3,
-    "src/agents/model-fallback.run-embedded.e2e.test.ts": 9,
-    "src/agents/sandbox-agent-config.agent-specific-sandbox-config.e2e.test.ts": 3,
+    "src/agents/model-fallback.run-embedded.e2e.test.ts": 7,
+    "src/agents/sandbox-agent-config.agent-specific-sandbox-config.e2e.test.ts": 1,
     "src/agents/sandbox/fs-bridge.backend.e2e.test.ts": 1,
+    "src/agents/subagent-announce.format.e2e.test.ts": 1,
+    "src/agents/subagent-registry.archive.e2e.test.ts": 1,
+    "src/agents/subagent-registry.lifecycle-retry-grace.e2e.test.ts": 1,
+    "src/agents/subagent-registry.nested.e2e.test.ts": 1,
     "src/agents/subagents/announce/subagent-announce.format.e2e.test.ts": 1,
     "src/agents/subagents/registry/subagent-registry.archive.e2e.test.ts": 1,
     "src/agents/subagents/registry/subagent-registry.lifecycle-retry-grace.e2e.test.ts": 1,
     "src/agents/subagents/registry/subagent-registry.nested.e2e.test.ts": 1,
     "src/auto-reply/reply.triggers.trigger-handling.e2e.test.ts": 11,
-    "src/auto-reply/reply/agent-runner.runreplyagent.e2e.test.ts": 46,
+    "src/auto-reply/reply/agent-runner.runreplyagent.e2e.test.ts": 10,
     "src/claws/lifecycle.e2e.test.ts": 282,
     "src/cli/plugins-cli.clawhub-install.e2e.test.ts": 13,
     "src/cli/plugins-search-command.clawhub.e2e.test.ts": 14,
-    "src/cli/program.nodes-basic.e2e.test.ts": 10,
+    "src/cli/program.nodes-basic.e2e.test.ts": 2,
     "src/cli/program.nodes-diagnostics-auth.e2e.test.ts": 3,
     "src/cli/program.nodes-media.e2e.test.ts": 1,
     "src/cli/program.nodes-push.e2e.test.ts": 2,
-    "src/cli/skills-cli.clawhub-install.e2e.test.ts": 10,
+    "src/cli/skills-cli.clawhub-install.e2e.test.ts": 4,
     "src/commands/agent-exec-plugin.e2e.test.ts": 21,
     "src/commands/doctor.refuses-newer-database-schemas.e2e.test.ts": 1,
-    "src/commands/doctor.runs-legacy-state-migrations-yes-mode-without.e2e.test.ts": 21,
+    "src/commands/doctor.runs-legacy-state-migrations-yes-mode-without.e2e.test.ts": 9,
     "src/commands/doctor.warns-per-agent-sandbox-docker-browser-prune.e2e.test.ts": 4,
-    "src/commands/doctor.warns-state-directory-is-missing.e2e.test.ts": 33,
+    "src/commands/doctor.warns-state-directory-is-missing.e2e.test.ts": 14,
     "src/commands/doctor/shared/legacy-config-migrate.e2e.test.ts": 8,
-    "src/commands/models.list.e2e.test.ts": 6,
-    "src/commands/models.set.e2e.test.ts": 5,
-    "src/commands/onboard-channels.e2e.test.ts": 3,
+    "src/commands/models.list.e2e.test.ts": 9,
+    "src/commands/models.set.e2e.test.ts": 1,
+    "src/commands/onboard-channels.e2e.test.ts": 7,
     "src/commands/onboard-guided.inference.e2e.test.ts": 8,
+    "src/commitments/commitments-heartbeat-policy.e2e.test.ts": 1,
     "src/cron/cron-delivery-outcomes.e2e.test.ts": 2,
     "src/cron/cron-execution-diagnostics.e2e.test.ts": 5,
     "src/cron/cron-state-contracts.e2e.test.ts": 1,
     "src/daemon/schtasks.integration.e2e.test.ts": 1,
-    "src/docker-setup.e2e.test.ts": 6,
+    "src/docker-setup.e2e.test.ts": 3,
     "src/flows/doctor-core-checks.e2e.test.ts": 1,
     "src/gateway/control-ui-assistant-media.e2e.test.ts": 1,
     "src/gateway/gateway-agent-skill-refresh.e2e.test.ts": 48,
     "src/gateway/gateway-wizard-cancel.e2e.test.ts": 1,
     "src/gateway/gateway-wizard.e2e.test.ts": 6,
     "src/gateway/gateway.compaction-hot-reload.e2e.test.ts": 4,
-    "src/gateway/gateway.test.ts": 29,
+    "src/gateway/gateway.test.ts": 7,
     "src/gateway/managed-image-actions.e2e.test.ts": 3,
     "src/gateway/node-plugin-tool-invoke-deadline.e2e.test.ts": 30,
-    "src/gateway/operator-approvals-client.e2e.test.ts": 4,
-    "src/gateway/server-methods/plugin-approval-turn-source-routing.e2e.test.ts": 1,
-    "src/gateway/server-network-runtime.e2e.test.ts": 3,
+    "src/gateway/operator-approvals-client.e2e.test.ts": 34,
+    "src/gateway/server-methods/plugin-approval-turn-source-routing.e2e.test.ts": 33,
+    "src/gateway/server-network-runtime.e2e.test.ts": 1,
     "src/gateway/server.startup-matrix-migration.integration.test.ts": 1,
-    "src/gateway/sessions-history-http.test.ts": 46,
+    "src/gateway/sessions-history-http.test.ts": 8,
     "src/gateway/subagent-completion-blocked.e2e.test.ts": 2,
     "src/hooks/hooks-lifecycle.e2e.test.ts": 34,
     "src/hooks/plugin-hooks.e2e.test.ts": 1,
-    "src/infra/net/proxy/external-proxy.e2e.test.ts": 3,
+    "src/infra/heartbeat-runner.active-hours-schedule.e2e.test.ts": 1,
+    "src/infra/net/proxy/external-proxy.e2e.test.ts": 1,
+    "src/plugin-state/plugin-state-store.e2e.test.ts": 1,
     "src/plugin-state/plugin-state-store.persistence.test.ts": 1,
-    "src/plugins/install.npm-spec.e2e.test.ts": 37,
+    "src/plugins/install.npm-spec.e2e.test.ts": 20,
     "src/plugins/wired-hooks-after-tool-call.e2e.test.ts": 1,
     "src/skills/workshop/experience-review.e2e.test.ts": 7,
     "src/tasks/plugin-managed-flows.e2e.test.ts": 1,
     "src/tasks/task-flow-registry.e2e.test.ts": 1,
     "src/tasks/task-operations.e2e.test.ts": 1,
+    "src/tui/tui-pty-local.e2e.test.ts": 74,
     "test/clawrouter-managed-gateway.e2e.test.ts": 24,
     "test/cli-json-stdout.agents.e2e.test.ts": 243,
     "test/cli-json-stdout.automation.e2e.test.ts": 44,
     "test/cli-json-stdout.config.e2e.test.ts": 38,
-    "test/cli-json-stdout.e2e.test.ts": 88,
+    "test/cli-json-stdout.e2e.test.ts": 4,
     "test/cli-json-stdout.gateway.e2e.test.ts": 67,
     "test/cli-json-stdout.hooks.e2e.test.ts": 75,
     "test/cli-json-stdout.models.e2e.test.ts": 112,
@@ -478,7 +403,7 @@
     "test/e2e/qa-lab/runtime/gateway-rpc-identity-presence.e2e.test.ts": 1,
     "test/e2e/qa-lab/runtime/gateway-rpc-models.e2e.test.ts": 4,
     "test/e2e/qa-lab/runtime/gateway-rpc-tools-skills.e2e.test.ts": 2,
-    "test/e2e/qa-lab/runtime/gateway-smoke.e2e.test.ts": 2,
+    "test/e2e/qa-lab/runtime/gateway-smoke.e2e.test.ts": 1,
     "test/e2e/qa-lab/runtime/gateway-usage-memory-apis.e2e.test.ts": 1,
     "test/e2e/qa-lab/runtime/gateway-whatsapp-login-authority.e2e.test.ts": 12,
     "test/e2e/qa-lab/runtime/managed-worktrees-cli-product-proof.e2e.test.ts": 18,
@@ -494,11 +419,11 @@
     "test/e2e/qa-lab/runtime/openclaw-sandbox-workspace-isolation.e2e.test.ts": 5,
     "test/e2e/qa-lab/runtime/openclaw-tool-policy-gates.e2e.test.ts": 1,
     "test/e2e/qa-lab/runtime/openclaw-workspace-mutation-tools.e2e.test.ts": 1,
-    "test/e2e/qa-lab/runtime/openwebui-probe.e2e.test.ts": 3,
+    "test/e2e/qa-lab/runtime/openwebui-probe.e2e.test.ts": 1,
     "test/e2e/qa-lab/runtime/otel-gateway-runtime.e2e.test.ts": 18,
-    "test/e2e/qa-lab/runtime/package-openclaw-for-docker.e2e.test.ts": 5,
+    "test/e2e/qa-lab/runtime/package-openclaw-for-docker.e2e.test.ts": 2,
     "test/e2e/qa-lab/runtime/paired-node-worker-lifecycle-wire.e2e.test.ts": 47,
-    "test/e2e/qa-lab/runtime/qa-otel-smoke.e2e.test.ts": 26,
+    "test/e2e/qa-lab/runtime/qa-otel-smoke.e2e.test.ts": 12,
     "test/e2e/qa-lab/runtime/session-transcript-cli-product-proof.e2e.test.ts": 23,
     "test/e2e/qa-lab/runtime/telegram-command-menu-gateway.e2e.test.ts": 17,
     "test/e2e/qa-lab/runtime/telegram-emoji-list-gateway.e2e.test.ts": 22,
@@ -520,11 +445,11 @@
     "test/gateway-session-end-shutdown.e2e.test.ts": 20,
     "test/gateway-steer-fifo.e2e.test.ts": 54,
     "test/gateway.multi.e2e.test.ts": 11,
-    "test/huggingface-local-app-openclaw.e2e.test.ts": 54,
+    "test/huggingface-local-app-openclaw.e2e.test.ts": 35,
     "test/mcp-show-redact.e2e.test.ts": 15,
     "test/onboard-plugin-warnings.e2e.test.ts": 8,
     "test/openclaw-launcher-version.e2e.test.ts": 1,
-    "test/openclaw-launcher.e2e.test.ts": 17,
+    "test/openclaw-launcher.e2e.test.ts": 3,
     "test/plugin-cron-registry-owner.e2e.test.ts": 31,
     "test/pr119473-real-runtime-proof.e2e.test.ts": 5,
     "test/pr126853-heartbeat-visible-lane-proof.e2e.test.ts": 5,
@@ -535,7 +460,285 @@
     "test/skills-proposal-manual-target.e2e.test.ts": 2,
     "test/status-shared-state-readonly.e2e.test.ts": 83
   },
-  "source": "scoped compact medians from 6 successful main CI runs: 35117379165, 35120372547, 35123270863, 35124135571, 35125714752, 35126089717; hosted-expanding and CLI process families and unrelated measurements retained",
+  "runtimePlacementTimings": {
+    "blacksmith": [
+      {
+        "configs": [
+          "test/vitest/vitest.agents-core.config.ts"
+        ],
+        "env": {},
+        "includePatterns": [
+          "src/agents/agent-command-local.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 66
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.agents-core.config.ts"
+        ],
+        "env": {},
+        "includePatterns": [
+          "src/agents/prepared-model-catalog-worker.integration.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 41
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.agents-core.config.ts"
+        ],
+        "env": {},
+        "includePatterns": [
+          "src/agents/runtime-plugins.context-engine.integration.test.ts",
+          "src/agents/simple-completion-runtime.plugin-scope.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 12
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.cli-process.config.ts"
+        ],
+        "env": {
+          "OPENCLAW_VITEST_MAX_WORKERS": "2"
+        },
+        "includePatterns": [
+          "src/cli/acp-cli-exit.process.test.ts",
+          "src/cli/update-cli/update-command-migrated.test.ts",
+          "src/cli/update-cli/update-command-post-update-recovery.test.ts",
+          "src/cli/update-cli/update-command-post-update-repair.test.ts",
+          "src/cli/update-cli/update-command-rollback.test.ts",
+          "src/cli/update-cli/update-command-service.integration.test.ts",
+          "src/cli/update-dry-run-state.process.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 246
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.commands.config.ts"
+        ],
+        "env": {},
+        "includePatterns": [
+          "src/commands/doctor-config-preflight.process.test.ts",
+          "src/commands/doctor-config-preflight.refusal.process.test.ts",
+          "src/commands/doctor-config-preflight.v17-atomicity.process.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 111
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.commands.config.ts"
+        ],
+        "env": {},
+        "includePatterns": [
+          "src/commands/doctor-plugin-install-config.process.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 91
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.gateway-core.config.ts",
+          "test/vitest/vitest.gateway-client.config.ts"
+        ],
+        "env": {},
+        "includePatterns": [
+          "src/gateway/gateway-active-memory.test.ts",
+          "src/gateway/gateway-auth-recovery.test.ts",
+          "src/gateway/gateway-concurrent-streams.test.ts",
+          "src/gateway/gateway-cron-process-identity.windows.test.ts",
+          "src/gateway/gateway-route-model-reuse.test.ts",
+          "src/gateway/gateway-ssh-upload-signal.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 81
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.gateway-methods.config.ts",
+          "test/vitest/vitest.gateway-methods-isolated.config.ts"
+        ],
+        "env": {
+          "OPENCLAW_VITEST_MAX_WORKERS": "2"
+        },
+        "includePatterns": [
+          "test/plugins/codex-model-catalog.gateway.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 31
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.gateway-server-isolated.config.ts",
+          "test/vitest/vitest.gateway-database-workers.config.ts"
+        ],
+        "env": {},
+        "includePatterns": [
+          "src/gateway/config-reload.test.ts",
+          "src/gateway/gateway-code-mode-clock.test.ts",
+          "src/gateway/gateway.chat-redaction.test.ts",
+          "src/gateway/health/collector.queue-health.test.ts",
+          "src/gateway/local-request-context.test.ts",
+          "src/gateway/managed-image-attachments.test.ts",
+          "src/gateway/server-chat.retired-projection.test.ts",
+          "src/gateway/server-methods/chat-send-synthetic-repair.integration.test.ts",
+          "src/gateway/server-methods/cron.list-scoped.test.ts",
+          "src/gateway/server-methods/cron.runs.test.ts",
+          "src/gateway/server-methods/cron.scheduled-policy-adoption.integration.test.ts",
+          "src/gateway/server-methods/cron.self-removal.test.ts",
+          "src/gateway/server-methods/cron.validation.test.ts",
+          "src/gateway/server-methods/models-auth-removal.integration.test.ts",
+          "src/gateway/server-methods/models-dispatch.catalog.integration.test.ts",
+          "src/gateway/server-methods/models-dispatch.lifecycle.integration.test.ts",
+          "src/gateway/server-methods/models-list.freshness.integration.test.ts",
+          "src/gateway/server-methods/models-list.membership.integration.test.ts",
+          "src/gateway/server-methods/models-list.native-lifecycle.integration.test.ts",
+          "src/gateway/server-methods/native-hook-relay.test.ts",
+          "src/gateway/server-methods/projects.test.ts",
+          "src/gateway/server-methods/requester-cron-authority.integration.test.ts",
+          "src/gateway/server-methods/send.scheduled-reads.integration.test.ts",
+          "src/gateway/server-methods/server-methods.test.ts",
+          "src/gateway/server-methods/sessions-create-worktree-base.test.ts",
+          "src/gateway/server-methods/sessions-describe-worker.test.ts",
+          "src/gateway/server-methods/sessions-list-persisted-worker.test.ts",
+          "src/gateway/server-methods/worktrees.authorization.test.ts",
+          "src/gateway/server-methods/worktrees.test.ts",
+          "src/gateway/server-plugin-subagent-runtime.overrides.test.ts",
+          "src/gateway/server.chat-recovered-output.test.ts",
+          "src/gateway/server.incomplete-stream.test.ts",
+          "src/gateway/server.placement-abandonment.lifecycle.test.ts",
+          "src/gateway/server.placement-abandonment.test.ts",
+          "src/gateway/server.sessions.compaction-read-errors.test.ts",
+          "src/gateway/server.sessions.create-worktree-spawn.test.ts",
+          "src/gateway/server.sessions.create.projects.test.ts",
+          "src/gateway/session-delivery-clock-jump.integration.test.ts",
+          "src/gateway/session-repository-materialization.test.ts",
+          "src/gateway/session-repository-publication-handoff.test.ts",
+          "src/gateway/session-swarm-summary.test.ts",
+          "src/gateway/session-utils.subagent.test.ts",
+          "src/gateway/tool-resolution.cron-capture.test.ts",
+          "src/gateway/worker-environments/provider-crabbox-runtime-preflight.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 471
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.gateway-server-isolated.config.ts",
+          "test/vitest/vitest.gateway-database-workers.config.ts"
+        ],
+        "env": {},
+        "includePatterns": [
+          "src/gateway/server.chat-cli-auth.test.ts",
+          "src/gateway/server.cli-watchdog.test.ts",
+          "src/gateway/server.codex-failure-recovery.test.ts",
+          "src/gateway/setup-inference.first-signin.integration.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 557
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.gateway-server.config.ts"
+        ],
+        "env": {},
+        "includePatterns": [
+          "src/gateway/server-sidecar-retention.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 33
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.gateway-server.config.ts"
+        ],
+        "env": {},
+        "includePatterns": [
+          "src/gateway/server.config-patch.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 125
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.infra.config.ts"
+        ],
+        "env": {},
+        "includePatterns": [
+          "src/entry.memory-json.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 54
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.infra.config.ts"
+        ],
+        "env": {},
+        "includePatterns": [
+          "src/infra/update-candidate-canary.integration.test.ts",
+          "src/infra/update-managed-service-handoff-lifecycle.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 395
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.plugin-sdk-light.config.ts",
+          "test/vitest/vitest.plugin-sdk.config.ts"
+        ],
+        "env": {},
+        "includePatterns": [
+          "src/plugin-sdk/channel-entry-contract.lifecycle.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 8
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.runtime-config.config.ts"
+        ],
+        "env": {
+          "OPENCLAW_VITEST_MAX_WORKERS": "2"
+        },
+        "includePatterns": [
+          "src/config/config-startup-corpus.test.ts",
+          "src/config/sessions/session-accessor.sqlite-reclamation-memory.test.ts",
+          "src/config/state-startup-corpus.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 457
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.unit-fast.config.ts"
+        ],
+        "env": {},
+        "includePatterns": [
+          "src/plugins/setup-registry.migrations.test.ts",
+          "src/plugins/source-checkout-runtime.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 12
+      },
+      {
+        "configs": [
+          "test/vitest/vitest.unit-src.config.ts"
+        ],
+        "env": {},
+        "includePatterns": [
+          "src/node-host/linux-node-plugin.integration.test.ts"
+        ],
+        "pretestBuildMode": "runtime",
+        "seconds": 13
+      }
+    ],
+    "github": []
+  },
+  "source": "median of 7 successful CI and release-check runs: 35073964651, 35162112798, 35197331149, 35198276757, 35198331942, 35200435246, 35200708607",
   "uiE2e": {
     "fileSeconds": {
       "ui/src/e2e/about.e2e.test.ts": 1,
@@ -883,6 +1086,6 @@
     },
     "perFileOverheadSeconds": 0.8
   },
-  "updatedAt": "2026-09-16",
+  "updatedAt": "2026-09-17",
   "version": 1
 }
