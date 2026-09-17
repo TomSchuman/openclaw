@@ -1,5 +1,6 @@
 // Slack tests cover provider.interop plugin behavior.
 import { EventEmitter } from "node:events";
+import { rawDataToString } from "openclaw/plugin-sdk/webhook-ingress";
 import { describe, expect, it, vi } from "vitest";
 import { WebSocketServer } from "ws";
 import {
@@ -505,8 +506,7 @@ describe("createSlackBoltApp", () => {
       const acknowledgements: string[] = [];
       socketServer.on("connection", (socket) => {
         socket.on("message", (data) => {
-          const bytes = Array.isArray(data) ? Buffer.concat(data) : Buffer.from(data);
-          acknowledgements.push(JSON.parse(bytes.toString("utf8")).envelope_id);
+          acknowledgements.push(JSON.parse(rawDataToString(data)).envelope_id);
         });
         socket.send(JSON.stringify({ type: "hello" }));
       });
